@@ -25,93 +25,38 @@
 #include <wx/timectrl.h>
 #include <wx/xrc/xmlres.h>
 
-
 #include <memory>
 
 class MainWindow : public wxDialog {
-private:
-protected:
-    enum {
-        DEC_COLOR_TEMP_APPLY = 6000,
-        INC_COLOR_TEMP_APPLY,
-        DEC_BRIGHTNESS_APPLY,
-        INC_BRIGHTNESS_APPLY,
-        ENABLE_DISABLE_APPLY,
-
-        DEC_COLOR_TEMP_CLEAR,
-        INC_COLOR_TEMP_CLEAR,
-        DEC_BRIGHTNESS_CLEAR,
-        INC_BRIGHTNESS_CLEAR,
-        ENABLE_DISABLE_CLEAR,
-
-        TEMPERATURE_SLIDER,
-        BRIGHTNESS_SLIDER,
-    };
-    wxRadioButton* daySelect;
-    wxRadioButton* nightSelect;
-    //wxStaticText* m_staticText3;
-    wxSlider* temperatureSlider;
-    //wxStaticText* m_staticText5;
-    //wxStaticText* m_staticText7;
-    wxSlider* brightnessSlider;
-    //wxStaticText* temperatureDescription;
-    //wxStaticText* m_staticText11;
-    wxTimePickerCtrl* timePicker;
-    wxButton* apply;
-    //wxStaticText* m_staticText12;
-    HotkeyInput* decColorTemp;
-    wxButton* decColorTempApply;
-    wxButton* decColorTempClear;
-    //wxStaticText* m_staticText13;
-    HotkeyInput* incColorTemp;
-    wxButton* incColorTempApply;
-    wxButton* incColorTempClear;
-    //wxStaticText* m_staticText14;
-    HotkeyInput* decBrightness;
-    wxButton* decBrightnessApply;
-    wxButton* decBrightnessClear;
-    //wxStaticText* m_staticText15;
-    HotkeyInput* incBrightness;
-    wxButton* incBrightnessApply;
-    wxButton* incBrightnessClear;
-    //wxStaticText* m_staticText16;
-    HotkeyInput* enableDisable;
-    wxButton* enableDisableApply;
-    wxButton* enableDisableClear;
-
 public:
     MainWindow(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString,
-              const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(454, 489),
-              long style = wxCAPTION | wxDEFAULT_DIALOG_STYLE | wxMINIMIZE_BOX | wxSYSTEM_MENU);
+               const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize,
+               long style = wxCAPTION | wxDEFAULT_DIALOG_STYLE | wxMINIMIZE_BOX | wxSYSTEM_MENU);
 
     ~MainWindow();
 
-
-
-
-    void DecreaseBrightness();
-    void IncreaseBrightness();
-    void DefaultBrightness();
-    void DecreaseTemperature();
+private:
     void IncreaseTemperature();
+    void DecreaseTemperature();
+    void IncreaseBrightness();
+    void DecreaseBrightness();
+    void DefaultBrightness();
+
     void Ramp();
     void Ramp2();
-    int cur_brightness_ = 128;
-    unsigned short cur_temperature_ = 5000;
-    bool last_result_ = true;
 
-    std::unique_ptr<MyTaskBarIcon> m_taskBarIcon;
-
-
-    void ApplyDecBrightnessHotkey(wxCommandEvent& event);
-    void ApplyIncBrightnessHotkey(wxCommandEvent& event);
-    void ApplyDecColorTempHotkey(wxCommandEvent& event);
     void ApplyIncColorTempHotkey(wxCommandEvent& event);
+    void ApplyDecColorTempHotkey(wxCommandEvent& event);
+    void ApplyIncBrightnessHotkey(wxCommandEvent& event);
+    void ApplyDecBrightnessHotkey(wxCommandEvent& event);
+    
+    
+    
     void ApplyEnableDisableHotkey(wxCommandEvent& event);
-    void ClearDecBrightnessHotkey(wxCommandEvent& event);
-    void ClearIncBrightnessHotkey(wxCommandEvent& event);
-    void ClearDecColorTempHotkey(wxCommandEvent& event);
     void ClearIncColorTempHotkey(wxCommandEvent& event);
+    void ClearDecColorTempHotkey(wxCommandEvent& event);
+    void ClearIncBrightnessHotkey(wxCommandEvent& event);
+    void ClearDecBrightnessHotkey(wxCommandEvent& event);
     void ClearEnableDisableHotkey(wxCommandEvent& event);
 
     void OnTemperatureSlider(wxCommandEvent& event);
@@ -120,34 +65,38 @@ public:
     void OnCloseWindow(wxCloseEvent& WXUNUSED(event));
 
     void OnIconize(wxIconizeEvent& event);
-    void onResize(wxSizeEvent& event) {
-        // layout everything in the dialog
-        //temperatureDescription->Wrap(event.GetSize().GetWidth());
-        Layout();
-
-        event.Skip();
-    }
-
+    //void onResize(wxSizeEvent& event);
 
     void RegisterHotKeys();
     void UpdateHotkeysFields();
 
-    //void onActivate(wxActivateEvent& event) {
-    //    UpdateHotkeysFields();
-    //}
+    // void onActivate(wxActivateEvent& event) {
+    //     UpdateHotkeysFields();
+    // }
     void UpdateSliders();
-    
+    void OnApply(wxCommandEvent& event);
+    void SwitchToDay(wxCommandEvent& event);
+    void SwitchToNight(wxCommandEvent& event);
 
-private:
+    wxRadioButton* daySelect_{};
+    wxRadioButton* nightSelect_{};
+    wxSlider* temperatureSlider_{};
+    wxSlider* brightnessSlider_{};
+    wxTimePickerCtrl* timePicker_{};
+    HotkeyInput* decTemperature_{};
+    HotkeyInput* incTemperature_{};
+    HotkeyInput* decBrightness_{};
+    HotkeyInput* incBrightness_{};
+    HotkeyInput* enableDisable_{};
+
     Settings settings_{};
-    
-    
-    
-    
-    
-    
-    
+
+    int cur_brightness_ = 128;
+    unsigned short cur_temperature_ = 5000;
+    bool last_result_ = true;
+
+    std::unique_ptr<MyTaskBarIcon> m_taskBarIcon;
+
+
     wxDECLARE_EVENT_TABLE();
-
 };
-
