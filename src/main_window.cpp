@@ -39,18 +39,61 @@ struct RGB {
     int B{};
 };
 
+RGB KtoRgb(int temperatureK) {
+    // Photo-grade results are for temperature in the range 1000K to 40000K. White light = 6500K
+
+    const double temperature = temperatureK / 100.0;
+
+    // RGB components
+    double red{};
+    double green{};
+    double blue{};
+
+    // RED
+    if (temperature <= 66.0) {
+        red = 255.0;
+    } else {
+        red = temperature - 60.0;
+        red = 329.698727446 * pow(red, -0.1332047592);
+        red = std::clamp(red, 0.0, 255.0);
+    }
+
+    // GREEN
+    if (temperature <= 66.0) {
+        green = temperature;
+        green = 99.4708025861 * log(green) - 161.1195681661;
+    } else {
+        green = temperature - 60.0;
+        green = 288.1221695283 * pow(green, -0.0755148492);
+    }
+    green = std::clamp(green, 0.0, 255.0);
+
+    // BLUE
+    if (temperature >= 66.0) {
+        blue = 255.0;
+    } else if (temperature <= 19.0) {
+        blue = 0.0;
+    } else {
+        blue = temperature - 10.0;
+        blue = 138.5177312231 * log(blue) - 305.0447927307;
+        blue = std::clamp(blue, 0.0, 255.0);
+    }
+
+    return {static_cast<int>(red), static_cast<int>(green), static_cast<int>(blue)};
+}
+
 } // namespace
 
 // clang-format off
 wxBEGIN_EVENT_TABLE(MainWindow, wxDialog)
-    EVT_BUTTON(INC_TEMPERATURE_APPLY, MainWindow::ApplyIncColorTempHotkey)
-    EVT_BUTTON(DEC_TEMPERATURE_APPLY, MainWindow::ApplyDecColorTempHotkey)
+    EVT_BUTTON(INC_TEMPERATURE_APPLY, MainWindow::ApplyIncTemperatureHotkey)
+    EVT_BUTTON(DEC_TEMPERATURE_APPLY, MainWindow::ApplyDecTemperatureHotkey)
     EVT_BUTTON(INC_BRIGHTNESS_APPLY, MainWindow::ApplyIncBrightnessHotkey)
     EVT_BUTTON(DEC_BRIGHTNESS_APPLY, MainWindow::ApplyDecBrightnessHotkey)
     EVT_BUTTON(ENABLE_DISABLE_APPLY, MainWindow::ApplyEnableDisableHotkey)
 
-    EVT_BUTTON(INC_TEMPERATURE_CLEAR, MainWindow::ClearIncColorTempHotkey)
-    EVT_BUTTON(DEC_TEMPERATURE_CLEAR, MainWindow::ClearDecColorTempHotkey)
+    EVT_BUTTON(INC_TEMPERATURE_CLEAR, MainWindow::ClearIncTemperatureHotkey)
+    EVT_BUTTON(DEC_TEMPERATURE_CLEAR, MainWindow::ClearDecTemperatureHotkey)
     EVT_BUTTON(INC_BRIGHTNESS_CLEAR, MainWindow::ClearIncBrightnessHotkey)
     EVT_BUTTON(DEC_BRIGHTNESS_CLEAR, MainWindow::ClearDecBrightnessHotkey)
     EVT_BUTTON(ENABLE_DISABLE_CLEAR, MainWindow::ClearEnableDisableHotkey)
@@ -337,47 +380,53 @@ void MainWindow::UpdateHotkeysFields() {
 
 
 
+void MainWindow::ApplyIncTemperatureHotkey(wxCommandEvent& event) {
+    settings_.incTemperature = incTemperature_->GetHotkey();
+    RegisterHotKey(Hotkeys::INC_TEMPERATURE, settings_.incTemperature.GetModifiers(), settings_.incTemperature.GetKey());
+}
 
+void MainWindow::ApplyDecTemperatureHotkey(wxCommandEvent& event) {
+    settings_.decTemperature = decTemperature_->GetHotkey();
+    RegisterHotKey(Hotkeys::DEC_TEMPERATURE, settings_.decTemperature.GetModifiers(), settings_.decTemperature.GetKey());
+}
 
+void MainWindow::ApplyIncBrightnessHotkey(wxCommandEvent& event) {
+    settings_.incBrightness = incBrightness_->GetHotkey();
+    RegisterHotKey(Hotkeys::INC_BRIGHTNESS, settings_.incBrightness.GetModifiers(), settings_.incBrightness.GetKey());
+}
 
 void MainWindow::ApplyDecBrightnessHotkey(wxCommandEvent& event) {
     settings_.decBrightness = decBrightness_->GetHotkey();
     RegisterHotKey(Hotkeys::DEC_BRIGHTNESS, settings_.decBrightness.GetModifiers(), settings_.decBrightness.GetKey());
 }
-void MainWindow::ApplyIncBrightnessHotkey(wxCommandEvent& event) {
-    settings_.incBrightness = incBrightness_->GetHotkey();
-    RegisterHotKey(Hotkeys::INC_BRIGHTNESS, settings_.incBrightness.GetModifiers(), settings_.incBrightness.GetKey());
-}
-void MainWindow::ApplyDecColorTempHotkey(wxCommandEvent& event) {
-    settings_.decTemperature = decTemperature_->GetHotkey();
-    RegisterHotKey(Hotkeys::DEC_TEMPERATURE, settings_.decTemperature.GetModifiers(), settings_.decTemperature.GetKey());
-}
-void MainWindow::ApplyIncColorTempHotkey(wxCommandEvent& event) {
-    settings_.incTemperature = incTemperature_->GetHotkey();
-    RegisterHotKey(Hotkeys::INC_TEMPERATURE, settings_.incTemperature.GetModifiers(), settings_.incTemperature.GetKey());
-}
+
 void MainWindow::ApplyEnableDisableHotkey(wxCommandEvent& event) {
     settings_.enableDisable = enableDisable_->GetHotkey();
     RegisterHotKey(Hotkeys::ENABLE_DISABLE, settings_.enableDisable.GetModifiers(), settings_.enableDisable.GetKey());
 
 }
 
-void MainWindow::ClearDecBrightnessHotkey(wxCommandEvent& event) {
-    decBrightness_->ClearHotkey();
-    UnregisterHotKey(Hotkeys::DEC_BRIGHTNESS);
+
+void MainWindow::ClearIncTemperatureHotkey(wxCommandEvent& event) {
+    incTemperature_->ClearHotkey();
+    UnregisterHotKey(Hotkeys::INC_TEMPERATURE);
 }
+
+void MainWindow::ClearDecTemperatureHotkey(wxCommandEvent& event) {
+    decTemperature_->ClearHotkey();
+    UnregisterHotKey(Hotkeys::DEC_TEMPERATURE);
+}
+
 void MainWindow::ClearIncBrightnessHotkey(wxCommandEvent& event) {
     incBrightness_->ClearHotkey();
     UnregisterHotKey(Hotkeys::INC_BRIGHTNESS);
 }
-void MainWindow::ClearDecColorTempHotkey(wxCommandEvent& event) {
-    decTemperature_->ClearHotkey();
-    UnregisterHotKey(Hotkeys::DEC_TEMPERATURE);
+
+void MainWindow::ClearDecBrightnessHotkey(wxCommandEvent& event) {
+    decBrightness_->ClearHotkey();
+    UnregisterHotKey(Hotkeys::DEC_BRIGHTNESS);
 }
-void MainWindow::ClearIncColorTempHotkey(wxCommandEvent& event) {
-    incTemperature_->ClearHotkey();
-    UnregisterHotKey(Hotkeys::INC_TEMPERATURE);
-}
+
 void MainWindow::ClearEnableDisableHotkey(wxCommandEvent& event) {
     enableDisable_->ClearHotkey();
     UnregisterHotKey(Hotkeys::ENABLE_DISABLE);
@@ -385,47 +434,19 @@ void MainWindow::ClearEnableDisableHotkey(wxCommandEvent& event) {
 
 
 void MainWindow::OnHotkey(wxKeyEvent& event) {
-    Hotkey hotkey{event.GetKeyCode(), event.GetModifiers(), event.GetUnicodeKey()};
-    
+    const auto hotkey = Hotkey{event.GetKeyCode(), event.GetModifiers(), event.GetUnicodeKey()};
 
-    if (hotkey == settings_.decBrightness) {
-        DecreaseBrightness();
-    } else if (hotkey == settings_.incBrightness) {
-        IncreaseBrightness();
+    if (hotkey == settings_.incTemperature) {
+        IncreaseTemperature();
     } else if (hotkey == settings_.decTemperature) {
         DecreaseTemperature();
-    } else if (hotkey == settings_.incTemperature) {
-        IncreaseTemperature();
+    } else if (hotkey == settings_.incBrightness) {
+        IncreaseBrightness();
+    } else if (hotkey == settings_.decBrightness) {
+        DecreaseBrightness();
     } else if (hotkey == settings_.enableDisable) {
         DefaultBrightness();
     }
-
-
-    /*
-    auto p = event.GetKeyCode();
-    wxCommandEvent e{};
-    // OnAbout(e);
-
-    if (p == WXK_PAGEDOWN) {
-        DecreaseBrightness();
-    } else if (p == WXK_PAGEUP) {
-        IncreaseBrightness();
-    } else if (p == WXK_END) {
-        DefaultBrightness();
-    } else if (p == WXK_INSERT) {
-        IncreaseTemperature();
-    } else if (p == WXK_DELETE) {
-        DecreaseTemperature();
-    }
-    //if (p == last_event_.GetKeyCode()) {
-    //    DecreaseBrightness();
-    //}
-    //auto w = this->FindFocus();
-    //event.SetEventObject(w);
-    //event.Skip();
-    
-    return;
-    */
 }
 
 void MainWindow::OnIconize(wxIconizeEvent& event) {
@@ -442,59 +463,16 @@ void MainWindow::OnIconize(wxIconizeEvent& event) {
 
 
 
-RGB KtoRGB2(int temperature_k) {
-    // Best results are achieved for temperature input in Kelvin in the range 1000 K to 40000 K. White light = 6500K
-
-    const double temperature = temperature_k / 100.0;
-
-    // RGB components
-    double red{};
-    double green{};
-    double blue{};
-
-    // RED
-    if (temperature <= 66.0) {
-        red = 255.0;
-    } else {
-        red = temperature - 60.0;
-        red = 329.698727446 * pow(red, -0.1332047592);
-        red = std::clamp(red, 0.0, 255.0);
-    }
-
-    // GREEN
-    if (temperature <= 66.0) {
-        green = temperature;
-        green = 99.4708025861 * log(green) - 161.1195681661;
-    } else {
-        green = temperature - 60.0;
-        green = 288.1221695283 * pow(green, -0.0755148492);
-    }
-    green = std::clamp(green, 0.0, 255.0);
-
-    // BLUE
-    if (temperature >= 66.0) {
-        blue = 255.0;
-    } else if (temperature <= 19.0) {
-        blue = 0.0;
-    } else {
-        blue = temperature - 10.0;
-        blue = 138.5177312231 * log(blue) - 305.0447927307;
-        blue = std::clamp(blue, 0.0, 255.0);
-    }
-
-    return {static_cast<int>(red), static_cast<int>(green), static_cast<int>(blue)};
-}
-
 
 
 void MainWindow::Ramp2() {
     static WORD gamma_array[3][256];
 
-    auto rgb = KtoRGB2(cur_temperature_);
+    auto rgb = KtoRgb(current_.temperatureK);
 
     //m_label->SetLabelText("R: " + std::to_string(rgb.R) + " G: " + std::to_string(rgb.G) + " B: " + std::to_string(rgb.B));
 
-    int gamma_diff = cur_brightness_ - 256;
+    int gamma_diff = current_.brightness - 256;
 
     for (int i = 0; i < 256; i++) {
         int arr_r = i * (rgb.R + 128 + gamma_diff);
@@ -510,15 +488,15 @@ void MainWindow::Ramp2() {
     }
 
     HDC hdc = GetDC(GetDesktopWindow());
-    last_result_ = SetDeviceGammaRamp(hdc, gamma_array);
+    SetDeviceGammaRamp(hdc, gamma_array);
 
     ReleaseDC(NULL, hdc);
 }
 
 void MainWindow::DecreaseBrightness() {
-    cur_brightness_ -= 10;
-    if (cur_brightness_ < 0)
-        cur_brightness_ = 0;
+    current_.brightness -= 10;
+    if (current_.brightness < 0)
+        current_.brightness = 0;
     Ramp2();
 
     UpdateSliders();
@@ -526,35 +504,34 @@ void MainWindow::DecreaseBrightness() {
 }
 
 void MainWindow::IncreaseBrightness() {
-    cur_brightness_ += 10;
-    if (cur_brightness_ > 256)
-        cur_brightness_ = 256;
+    current_.brightness += 10;
+    if (current_.brightness > 256)
+        current_.brightness = 256;
     Ramp2();
     UpdateSliders();
     //UpdateLabel();
 }
 
 void MainWindow::DefaultBrightness() {
-    cur_brightness_ = 128;
-    cur_temperature_ = 5000;
+    current_ = ColorSettings{};
     Ramp();
     UpdateSliders();
     //UpdateLabel();
 }
 
 void MainWindow::DecreaseTemperature() {
-    cur_temperature_ -= 100;
-    if (cur_temperature_ < 300)
-        cur_temperature_ = 300;
+    current_.temperatureK -= 100;
+    if (current_.temperatureK < 300)
+        current_.temperatureK = 300;
     Ramp2();
     UpdateSliders();
     //UpdateLabel();
 }
 
 void MainWindow::IncreaseTemperature() {
-    cur_temperature_ += 100;
-    if (cur_temperature_ > 28000)
-        cur_temperature_ = 28000;
+    current_.temperatureK += 100;
+    if (current_.temperatureK > 28000)
+        current_.temperatureK = 28000;
     Ramp2();
     UpdateSliders();
     //UpdateLabel();
@@ -565,49 +542,46 @@ void MainWindow::Ramp() {
     static WORD gamma_array[3][256];
     
     for (int i = 0; i < 256; i++) {
-        int arr = i * (cur_brightness_ + 128);  // GamaRate 128 = Normal
+        int arr = i * (current_.brightness + 128);  // GamaRate 128 = Normal
         if (arr > 65535)
             arr = 65535;
 
         gamma_array[0][i] = gamma_array[1][i] = gamma_array[2][i] = static_cast<WORD>(arr);
     }
     HDC hdc = GetDC(GetDesktopWindow());
-    last_result_ = SetDeviceGammaRamp(hdc, gamma_array);
+    SetDeviceGammaRamp(hdc, gamma_array);
 
     ReleaseDC(NULL, hdc);
 }
 
 
 void MainWindow::OnTemperatureSlider(wxCommandEvent& event) {
-    cur_temperature_ = event.GetInt();
+    current_.temperatureK = event.GetInt();
     Ramp2();
     //UpdateLabel();tem
 }
 
 void MainWindow::OnBrightnessSlider(wxCommandEvent& event) {
-    cur_brightness_ = event.GetInt() + 128;
+    current_.brightness = event.GetInt() + 128;
     Ramp2();
     // UpdateLabel();tem
 }
 
 void MainWindow::UpdateSliders() {
-    temperatureSlider_->SetValue(cur_temperature_);
-    brightnessSlider_->SetValue(cur_brightness_ - 128);
+    temperatureSlider_->SetValue(current_.temperatureK);
+    brightnessSlider_->SetValue(current_.brightness - 128);
 }
 
 void MainWindow::OnApply(wxCommandEvent& event) {
-    ColorSettings colorSettings{cur_temperature_, cur_brightness_};
-    (daySelect_->GetValue() ? settings_.dayColors : settings_.nightColors) = colorSettings;
+    (daySelect_->GetValue() ? settings_.dayColors : settings_.nightColors) = current_;
 }
 void MainWindow::SwitchToDay(wxCommandEvent& event) {
-    cur_temperature_ = settings_.dayColors.temperatureK;
-    cur_brightness_ = settings_.dayColors.brightness;
+    current_ = settings_.dayColors;
     Ramp2();
     UpdateSliders();
 }
 void MainWindow::SwitchToNight(wxCommandEvent& event) {
-    cur_temperature_ = settings_.nightColors.temperatureK;
-    cur_brightness_ = settings_.nightColors.brightness;
+    current_ = settings_.nightColors;
     Ramp2();
     UpdateSliders();
 }

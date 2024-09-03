@@ -3,27 +3,27 @@
 #include "settings.h"
 #include "taskbar.h"
 
-#include <wx/artprov.h>
-#include <wx/bitmap.h>
-#include <wx/button.h>
-#include <wx/colour.h>
-#include <wx/dateevt.h>
+//#include <wx/artprov.h>
+//#include <wx/bitmap.h>
+//#include <wx/button.h>
+//#include <wx/colour.h>
+//#include <wx/dateevt.h>
 #include <wx/dialog.h>
-#include <wx/font.h>
-#include <wx/gdicmn.h>
-#include <wx/icon.h>
-#include <wx/image.h>
-#include <wx/intl.h>
+//#include <wx/font.h>
+//#include <wx/gdicmn.h>
+//#include <wx/icon.h>
+//#include <wx/image.h>
+//#include <wx/intl.h>
 #include <wx/radiobut.h>
-#include <wx/settings.h>
-#include <wx/sizer.h>
+//#include <wx/settings.h>
+//#include <wx/sizer.h>
 #include <wx/slider.h>
-#include <wx/statbox.h>
-#include <wx/stattext.h>
-#include <wx/string.h>
-#include <wx/textctrl.h>
+//#include <wx/statbox.h>
+//#include <wx/stattext.h>
+//#include <wx/string.h>
+//#include <wx/textctrl.h>
 #include <wx/timectrl.h>
-#include <wx/xrc/xmlres.h>
+//#include <wx/xrc/xmlres.h>
 
 #include <memory>
 
@@ -45,16 +45,16 @@ private:
     void Ramp();
     void Ramp2();
 
-    void ApplyIncColorTempHotkey(wxCommandEvent& event);
-    void ApplyDecColorTempHotkey(wxCommandEvent& event);
+    void ApplyIncTemperatureHotkey(wxCommandEvent& event);
+    void ApplyDecTemperatureHotkey(wxCommandEvent& event);
     void ApplyIncBrightnessHotkey(wxCommandEvent& event);
     void ApplyDecBrightnessHotkey(wxCommandEvent& event);
     
     
     
     void ApplyEnableDisableHotkey(wxCommandEvent& event);
-    void ClearIncColorTempHotkey(wxCommandEvent& event);
-    void ClearDecColorTempHotkey(wxCommandEvent& event);
+    void ClearIncTemperatureHotkey(wxCommandEvent& event);
+    void ClearDecTemperatureHotkey(wxCommandEvent& event);
     void ClearIncBrightnessHotkey(wxCommandEvent& event);
     void ClearDecBrightnessHotkey(wxCommandEvent& event);
     void ClearEnableDisableHotkey(wxCommandEvent& event);
@@ -91,9 +91,7 @@ private:
 
     Settings settings_{};
 
-    int cur_brightness_ = 128;
-    unsigned short cur_temperature_ = 5000;
-    bool last_result_ = true;
+    ColorSettings current_{};
 
     std::unique_ptr<MyTaskBarIcon> m_taskBarIcon;
 
