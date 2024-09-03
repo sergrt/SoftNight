@@ -163,7 +163,8 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     auto temperatureText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Temperature, K"), wxDefaultPosition, wxDefaultSize, 0);
     temperatureBrightnessSizer->Add(temperatureText, 0, wxALL, 5);
 
-    temperatureSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), TEMPERATURE_SLIDER, 3000, 100, 10000, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
+    temperatureSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), TEMPERATURE_SLIDER,
+        kDefaultTemperatureK, kMinTemperatureK, kMaxTemperatureK, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
     temperatureBrightnessSizer->Add(temperatureSlider_, 0, wxALL | wxEXPAND, 5);
 
     auto temperatureDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Photo-grade range is 1000K - 40000K. White light = 6500K.\nRange can be limited by Windows, see README for details"));
@@ -177,7 +178,8 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     auto brightnessText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Brightness"), wxDefaultPosition, wxDefaultSize, 0);
     temperatureBrightnessSizer->Add(brightnessText, 0, wxALL, 5);
 
-    brightnessSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), BRIGHTNESS_SLIDER, 0, -128, 128, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
+    brightnessSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), BRIGHTNESS_SLIDER,
+        kDefaultBrightness - 128, kMinBrightness - 128, kMaxBrightness - 128, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
     temperatureBrightnessSizer->Add(brightnessSlider_, 0, wxALL | wxEXPAND, 5);
 
     auto brightnessDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Use brightness slider to tweak color filtering.\nIt controls red/orange - blue/white balance depending on temperature"), wxDefaultPosition, wxDefaultSize, 0);
@@ -494,9 +496,9 @@ void MainWindow::Ramp2() {
 }
 
 void MainWindow::DecreaseBrightness() {
-    current_.brightness -= 10;
-    if (current_.brightness < 0)
-        current_.brightness = 0;
+    current_.brightness -= kBrightnessStep;
+    if (current_.brightness < kMinBrightness)
+        current_.brightness = kMinBrightness;
     Ramp2();
 
     UpdateSliders();
@@ -504,9 +506,9 @@ void MainWindow::DecreaseBrightness() {
 }
 
 void MainWindow::IncreaseBrightness() {
-    current_.brightness += 10;
-    if (current_.brightness > 256)
-        current_.brightness = 256;
+    current_.brightness += kBrightnessStep;
+    if (current_.brightness > kMaxBrightness)
+        current_.brightness = kMaxBrightness;
     Ramp2();
     UpdateSliders();
     //UpdateLabel();
@@ -520,18 +522,18 @@ void MainWindow::DefaultBrightness() {
 }
 
 void MainWindow::DecreaseTemperature() {
-    current_.temperatureK -= 100;
-    if (current_.temperatureK < 300)
-        current_.temperatureK = 300;
+    current_.temperatureK -= kTemperatureStep;
+    if (current_.temperatureK < kMinTemperatureK)
+        current_.temperatureK = kMinTemperatureK;
     Ramp2();
     UpdateSliders();
     //UpdateLabel();
 }
 
 void MainWindow::IncreaseTemperature() {
-    current_.temperatureK += 100;
-    if (current_.temperatureK > 28000)
-        current_.temperatureK = 28000;
+    current_.temperatureK += kTemperatureStep;
+    if (current_.temperatureK > kMaxTemperatureK)
+        current_.temperatureK = kMaxTemperatureK;
     Ramp2();
     UpdateSliders();
     //UpdateLabel();
