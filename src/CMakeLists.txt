@@ -1,0 +1,36 @@
+﻿cmake_minimum_required(VERSION 3.15)
+
+project(SoftNight)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Search prebuilt 3rd party dependencies in those folders
+list(APPEND CMAKE_PREFIX_PATH "${THIRDPARTY_DIR}")
+
+find_package(wxWidgets REQUIRED)
+include(${wxWidgets_USE_FILE})
+
+set(SOURCE
+    app.cpp
+    hotkey_input.cpp
+    main_window.cpp
+    settings.cpp
+    taskbar.cpp)
+
+set(HEADER
+    app.h
+    hotkey.h
+    hotkey_input.h
+    main_window.h
+    settings.h
+    taskbar.h
+)
+
+set(OTHER_FILES
+    ${wxWidgets_INCLUDE_DIRS}/wx/msw/wx_dpi_aware.manifest
+)
+
+add_executable(${PROJECT_NAME} WIN32 ${SOURCE} ${HEADER} ${OTHER_FILES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES})
