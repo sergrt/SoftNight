@@ -1,6 +1,7 @@
 #include "main_window.h"
 
 #include "color_correction.h"
+
 //#include <wx/button.h>
 //#include <wx/msgdlg.h>
 //#include <wx/sizer.h>
@@ -9,7 +10,12 @@
 //#include <wx/textctrl.h>
 //#include <wx/uiaction.h>
 
+#include <chrono>
+
 namespace {
+
+const std::string kSettingsFileName = "settings.json";
+inline const auto kColorUpdateInterval = std::chrono::seconds(5);
 
 enum {
     START_VALUE = 6000,
@@ -32,6 +38,8 @@ enum {
 
     TEMPERATURE_SLIDER,
     BRIGHTNESS_SLIDER,
+    
+    COLORS_UPDATE_TIMER,
 };
 
 } // namespace
@@ -61,6 +69,7 @@ wxBEGIN_EVENT_TABLE(MainWindow, wxDialog)
     EVT_ICONIZE(MainWindow::OnIconize)
     //EVT_SIZE(MainWindow::onResize)
     EVT_HOTKEY(wxID_ANY, MainWindow::OnHotkey)
+    EVT_TIMER(COLORS_UPDATE_TIMER, MainWindow::UpdateColorsOnTimer)
 wxEND_EVENT_TABLE()
 // clang-format on
 
@@ -68,10 +77,10 @@ void MainWindow::OnCloseWindow(wxCloseEvent& WXUNUSED(event)) {
     Destroy();
 }
 MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size,
-                     long style)
-    : wxDialog(parent, id, title, pos, size, wxRESIZE_BORDER | wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX | wxMINIMIZE_BOX)
-    , m_taskBarIcon{std::make_unique<MyTaskBarIcon>(this)} {
-
+                       long style)
+    : wxDialog(parent, id, title, pos, size,
+               wxRESIZE_BORDER | wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX | wxMINIMIZE_BOX),
+      m_taskBarIcon{std::make_unique<MyTaskBarIcon>(this)} {
     wxIcon icon(wxIconLocation(R"(c:\Windows\system32\imageres.dll)", -67));
     if (icon.IsOk()) {
         // wxLogMessage("Loaded icon of size %d*%d", icon.GetWidth(), icon.GetHeight());
@@ -79,22 +88,15 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
         (void)x;
     }
     SetIcon(icon);
-    
+
     this->SetSizeHints(wxDefaultSize, wxDefaultSize);
 
-    
-
-    wxFlexGridSizer* mainFlexSizer= new wxFlexGridSizer(2, 1, 0, 0);
+    wxFlexGridSizer* mainFlexSizer = new wxFlexGridSizer(2, 1, 0, 0);
     mainFlexSizer->AddGrowableCol(0);
     mainFlexSizer->AddGrowableRow(0);
     mainFlexSizer->SetFlexibleDirection(wxBOTH);
     mainFlexSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    
-
-    
-
-    
     auto colorControlsBox = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, _("Color controls")), wxVERTICAL);
 
     // Day-night select
@@ -112,32 +114,40 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     temperatureBrightnessSizer->SetFlexibleDirection(wxBOTH);
     temperatureBrightnessSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    auto temperatureText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Temperature, K"), wxDefaultPosition, wxDefaultSize, 0);
+    auto temperatureText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Temperature, K"),
+                                            wxDefaultPosition, wxDefaultSize, 0);
     temperatureBrightnessSizer->Add(temperatureText, 0, wxALL, 5);
 
-    temperatureSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), TEMPERATURE_SLIDER,
-        kDefaultTemperatureK, kMinTemperatureK, kMaxTemperatureK, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
+    temperatureSlider_ =
+        new wxSlider(colorControlsBox->GetStaticBox(), TEMPERATURE_SLIDER, kDefaultTemperatureK, kMinTemperatureK,
+                     kMaxTemperatureK, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
     temperatureBrightnessSizer->Add(temperatureSlider_, 0, wxALL | wxEXPAND, 5);
 
-    auto temperatureDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Photo-grade range is 1000K - 40000K. White light = 6500K.\nRange can be limited by Windows, see README for details"));
-    temperatureBrightnessSizer->AddSpacer((10, 10)); 
+    auto temperatureDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY,
+                                                   _("Photo-grade range is 1000K - 40000K. White light = 6500K.\nRange "
+                                                     "can be limited by Windows, see README for details"));
+    temperatureBrightnessSizer->AddSpacer((10, 10));
     temperatureBrightnessSizer->Add(temperatureDescription, 0, wxALIGN_TOP | wxALL | wxEXPAND, 0);
 
     // Spacer row
     temperatureBrightnessSizer->AddSpacer((10, 20));
     temperatureBrightnessSizer->AddSpacer((10, 20));
 
-    auto brightnessText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Brightness"), wxDefaultPosition, wxDefaultSize, 0);
+    auto brightnessText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Brightness"),
+                                           wxDefaultPosition, wxDefaultSize, 0);
     temperatureBrightnessSizer->Add(brightnessText, 0, wxALL, 5);
 
-    brightnessSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), BRIGHTNESS_SLIDER,
-        kDefaultBrightness - 128, kMinBrightness - 128, kMaxBrightness - 128, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
+    brightnessSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), BRIGHTNESS_SLIDER, kDefaultBrightness - 128,
+                                     kMinBrightness - 128, kMaxBrightness - 128, wxDefaultPosition, wxDefaultSize,
+                                     wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
     temperatureBrightnessSizer->Add(brightnessSlider_, 0, wxALL | wxEXPAND, 5);
 
-    auto brightnessDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Use brightness slider to tweak color filtering.\nIt controls red/orange - blue/white balance depending on temperature"), wxDefaultPosition, wxDefaultSize, 0);
-    temperatureBrightnessSizer->AddSpacer((10, 10)); 
+    auto brightnessDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY,
+                                                  _("Use brightness slider to tweak color filtering.\nIt controls "
+                                                    "red/orange - blue/white balance depending on temperature"),
+                                                  wxDefaultPosition, wxDefaultSize, 0);
+    temperatureBrightnessSizer->AddSpacer((10, 10));
     temperatureBrightnessSizer->Add(brightnessDescription, 0, wxALIGN_TOP | wxALL | wxEXPAND, 0);
-
 
     // Time and apply
     wxBoxSizer* timeSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -148,10 +158,9 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     timePicker_ = new wxTimePickerCtrl(colorControlsBox->GetStaticBox(), wxID_ANY);
     timeSizer->Add(timePicker_, 0, wxALIGN_CENTER | wxALL, 5);
     timeSizer->Add(0, 0, 1, wxEXPAND, 5);
-    auto apply = new wxButton(colorControlsBox->GetStaticBox(), BN_APPLY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0);
+    auto apply =
+        new wxButton(colorControlsBox->GetStaticBox(), BN_APPLY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0);
     timeSizer->Add(apply, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
-
-
 
     auto colorControlsSizer = new wxFlexGridSizer(3, 1, 0, 0);
     colorControlsSizer->AddGrowableCol(0);
@@ -164,11 +173,6 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     colorControlsSizer->Add(timeSizer, 1, wxBOTTOM | wxEXPAND | wxTOP, 25);
 
     colorControlsBox->Add(colorControlsSizer, 1, wxEXPAND, 5);
-    
-
-
-
-
 
     auto hotkeysBox = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, _("Hotkeys")), wxVERTICAL);
 
@@ -229,8 +233,6 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
 
     hotkeysBox->Add(hotkeysSizer, 1, wxBOTTOM | wxEXPAND | wxTOP, 5);
 
-
-
     mainFlexSizer->Add(colorControlsBox, 1, wxEXPAND | wxALL, 8);
     mainFlexSizer->Add(hotkeysBox, 1, wxEXPAND | wxALL, 8);
 
@@ -238,24 +240,31 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     mainSizer->Add(mainFlexSizer, 1, wxEXPAND, 5);
 
     this->SetSizer(mainSizer);
-    
+
+    settings_ = LoadSettings(kSettingsFileName);
 
     UpdateSliders();
     UpdateHotkeysFields();
+    UpdateTimeField();
 
     this->SetSize({650, 700});
     this->Layout();
     this->Centre(wxBOTH);
 
     RegisterHotKeys();
+    //StartColorThread();
 
+    wxTimer* colorTimer_ = new wxTimer(this, COLORS_UPDATE_TIMER);
+    colorTimer_->Start(kColorUpdateInterval.count());
+    //this->Connect(colorTimer_->GetId(), wxEVT_TIMER, wxTimerEventHandler(MyDialog1::UpdateColorsOnTimer), NULL, this);
     
-
-
-
-    
-    
+    // SaveSettings(settings_, kSettingsFileName);
 }
+
+void MainWindow::UpdateColorsOnTimer(wxTimerEvent& event) {
+    Ramp2(current_);
+}
+
 
 MainWindow::~MainWindow() {}
 
@@ -337,27 +346,31 @@ void MainWindow::UpdateHotkeysFields() {
 void MainWindow::ApplyIncTemperatureHotkey(wxCommandEvent& event) {
     settings_.incTemperature = incTemperature_->GetHotkey();
     RegisterHotKey(Hotkeys::INC_TEMPERATURE, settings_.incTemperature.GetModifiers(), settings_.incTemperature.GetKey());
+    SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyDecTemperatureHotkey(wxCommandEvent& event) {
     settings_.decTemperature = decTemperature_->GetHotkey();
     RegisterHotKey(Hotkeys::DEC_TEMPERATURE, settings_.decTemperature.GetModifiers(), settings_.decTemperature.GetKey());
+    SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyIncBrightnessHotkey(wxCommandEvent& event) {
     settings_.incBrightness = incBrightness_->GetHotkey();
     RegisterHotKey(Hotkeys::INC_BRIGHTNESS, settings_.incBrightness.GetModifiers(), settings_.incBrightness.GetKey());
+    SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyDecBrightnessHotkey(wxCommandEvent& event) {
     settings_.decBrightness = decBrightness_->GetHotkey();
     RegisterHotKey(Hotkeys::DEC_BRIGHTNESS, settings_.decBrightness.GetModifiers(), settings_.decBrightness.GetKey());
+    SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyEnableDisableHotkey(wxCommandEvent& event) {
     settings_.enableDisable = enableDisable_->GetHotkey();
     RegisterHotKey(Hotkeys::ENABLE_DISABLE, settings_.enableDisable.GetModifiers(), settings_.enableDisable.GetKey());
-
+    SaveSettings(settings_, kSettingsFileName);
 }
 
 
@@ -469,17 +482,32 @@ void MainWindow::UpdateSliders() {
 }
 
 void MainWindow::OnApply(wxCommandEvent& event) {
-    (daySelect_->GetValue() ? settings_.dayColors : settings_.nightColors) = current_;
+    if (daySelect_->GetValue()) {
+        settings_.dayColors = current_;
+        timePicker_->GetTime(&settings_.swithToDay.hour, &settings_.swithToDay.minute, &settings_.swithToDay.second);
+    } else {
+        settings_.nightColors = current_;
+        timePicker_->GetTime(&settings_.swithToNight.hour, &settings_.swithToNight.minute, &settings_.swithToNight.second);
+    }
+
+    SaveSettings(settings_, kSettingsFileName);
 }
 void MainWindow::SwitchToDay(wxCommandEvent& event) {
     current_ = settings_.dayColors;
+    timePicker_->SetTime(settings_.swithToDay.hour, settings_.swithToDay.minute, settings_.swithToDay.second);
     Ramp2(current_);
     UpdateSliders();
 }
 void MainWindow::SwitchToNight(wxCommandEvent& event) {
     current_ = settings_.nightColors;
+    timePicker_->SetTime(settings_.swithToNight.hour, settings_.swithToNight.minute, settings_.swithToNight.second);
     Ramp2(current_);
     UpdateSliders();
+}
+
+void MainWindow::UpdateTimeField() {
+    const auto& time = daySelect_->GetValue() ? settings_.swithToDay : settings_.swithToNight;
+    timePicker_->SetTime(time.hour, time.minute, time.second);
 }
 
 /*

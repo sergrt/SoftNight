@@ -4,11 +4,19 @@
 
 #include <chrono>
 
+struct Time {
+    int hour{};
+    int minute{};
+    int second{};
+};
+
 struct Settings {
     ColorSettings dayColors{};
     ColorSettings nightColors{};
+    ColorSettings currentColors{};
 
-    std::chrono::time_point<std::chrono::steady_clock> lastUpdate{};
+    Time swithToDay{};
+    Time swithToNight{};
 
     Hotkey incTemperature{WXK_INSERT, wxMOD_ALT};
     Hotkey decTemperature{WXK_DELETE, wxMOD_ALT, WXK_DELETE};

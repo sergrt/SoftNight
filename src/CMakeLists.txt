@@ -23,8 +23,8 @@ set(SOURCE
 
 set(HEADER
     app.h
-    color_settings.h
     color_correction.h
+    color_settings.h
     hotkey.h
     hotkey_input.h
     main_window.h

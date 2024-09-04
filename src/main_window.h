@@ -26,6 +26,7 @@
 //#include <wx/xrc/xmlres.h>
 
 #include <memory>
+#include <thread>
 
 class MainWindow : public wxDialog {
 public:
@@ -64,6 +65,7 @@ private:
 
     void RegisterHotKeys();
     void UpdateHotkeysFields();
+    void UpdateTimeField();
 
     // void onActivate(wxActivateEvent& event) {
     //     UpdateHotkeysFields();
@@ -72,6 +74,8 @@ private:
     void OnApply(wxCommandEvent& event);
     void SwitchToDay(wxCommandEvent& event);
     void SwitchToNight(wxCommandEvent& event);
+
+    void UpdateColorsOnTimer(wxTimerEvent& event);
 
     wxRadioButton* daySelect_{};
     wxRadioButton* nightSelect_{};
@@ -89,6 +93,7 @@ private:
     ColorSettings current_{};
 
     std::unique_ptr<MyTaskBarIcon> m_taskBarIcon;
+    std::jthread colorThread_;
 
 
     wxDECLARE_EVENT_TABLE();
