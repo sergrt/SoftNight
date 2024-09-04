@@ -42,16 +42,11 @@ private:
     void DecreaseBrightness();
     void DefaultBrightness();
 
-    void Ramp();
-    void Ramp2();
-
     void ApplyIncTemperatureHotkey(wxCommandEvent& event);
     void ApplyDecTemperatureHotkey(wxCommandEvent& event);
     void ApplyIncBrightnessHotkey(wxCommandEvent& event);
     void ApplyDecBrightnessHotkey(wxCommandEvent& event);
-    
-    
-    
+
     void ApplyEnableDisableHotkey(wxCommandEvent& event);
     void ClearIncTemperatureHotkey(wxCommandEvent& event);
     void ClearDecTemperatureHotkey(wxCommandEvent& event);

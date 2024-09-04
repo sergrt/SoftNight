@@ -12,6 +12,8 @@ list(APPEND CMAKE_PREFIX_PATH "${THIRDPARTY_DIR}")
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 
+include_directories("${THIRDPARTY_DIR}/json/include")
+
 set(SOURCE
     app.cpp
     hotkey_input.cpp
@@ -22,6 +24,7 @@ set(SOURCE
 set(HEADER
     app.h
     color_settings.h
+    color_correction.h
     hotkey.h
     hotkey_input.h
     main_window.h

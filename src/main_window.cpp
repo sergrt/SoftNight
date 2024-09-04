@@ -1,5 +1,6 @@
 #include "main_window.h"
 
+#include "color_correction.h"
 //#include <wx/button.h>
 //#include <wx/msgdlg.h>
 //#include <wx/sizer.h>
@@ -32,55 +33,6 @@ enum {
     TEMPERATURE_SLIDER,
     BRIGHTNESS_SLIDER,
 };
-
-struct RGB {
-    int R{};
-    int G{};
-    int B{};
-};
-
-RGB KtoRgb(int temperatureK) {
-    // Photo-grade results are for temperature in the range 1000K to 40000K. White light = 6500K
-
-    const double temperature = temperatureK / 100.0;
-
-    // RGB components
-    double red{};
-    double green{};
-    double blue{};
-
-    // RED
-    if (temperature <= 66.0) {
-        red = 255.0;
-    } else {
-        red = temperature - 60.0;
-        red = 329.698727446 * pow(red, -0.1332047592);
-        red = std::clamp(red, 0.0, 255.0);
-    }
-
-    // GREEN
-    if (temperature <= 66.0) {
-        green = temperature;
-        green = 99.4708025861 * log(green) - 161.1195681661;
-    } else {
-        green = temperature - 60.0;
-        green = 288.1221695283 * pow(green, -0.0755148492);
-    }
-    green = std::clamp(green, 0.0, 255.0);
-
-    // BLUE
-    if (temperature >= 66.0) {
-        blue = 255.0;
-    } else if (temperature <= 19.0) {
-        blue = 0.0;
-    } else {
-        blue = temperature - 10.0;
-        blue = 138.5177312231 * log(blue) - 305.0447927307;
-        blue = std::clamp(blue, 0.0, 255.0);
-    }
-
-    return {static_cast<int>(red), static_cast<int>(green), static_cast<int>(blue)};
-}
 
 } // namespace
 
@@ -463,110 +415,52 @@ void MainWindow::OnIconize(wxIconizeEvent& event) {
     }
 }
 
-
-
-
-
-void MainWindow::Ramp2() {
-    static WORD gamma_array[3][256];
-
-    auto rgb = KtoRgb(current_.temperatureK);
-
-    //m_label->SetLabelText("R: " + std::to_string(rgb.R) + " G: " + std::to_string(rgb.G) + " B: " + std::to_string(rgb.B));
-
-    int gamma_diff = current_.brightness - 256;
-
-    for (int i = 0; i < 256; i++) {
-        int arr_r = i * (rgb.R + 128 + gamma_diff);
-        arr_r = std::clamp(arr_r, 0, 65535);
-        int arr_g = i * (rgb.G + 128 + gamma_diff);
-        arr_g = std::clamp(arr_g, 0, 65535);
-        int arr_b = i * (rgb.B + 128 + gamma_diff);
-        arr_b = std::clamp(arr_b, 0, 65535);
-
-        gamma_array[0][i] = static_cast<WORD>(arr_r);
-        gamma_array[1][i] = static_cast<WORD>(arr_g);
-        gamma_array[2][i] = static_cast<WORD>(arr_b);
-    }
-
-    HDC hdc = GetDC(GetDesktopWindow());
-    SetDeviceGammaRamp(hdc, gamma_array);
-
-    ReleaseDC(NULL, hdc);
-}
-
-void MainWindow::DecreaseBrightness() {
-    current_.brightness -= kBrightnessStep;
-    if (current_.brightness < kMinBrightness)
-        current_.brightness = kMinBrightness;
-    Ramp2();
-
+void MainWindow::IncreaseTemperature() {
+    current_.temperatureK += kTemperatureStep;
+    if (current_.temperatureK > kMaxTemperatureK)
+        current_.temperatureK = kMaxTemperatureK;
+    Ramp2(current_);
     UpdateSliders();
-    //UpdateLabel();
-}
-
-void MainWindow::IncreaseBrightness() {
-    current_.brightness += kBrightnessStep;
-    if (current_.brightness > kMaxBrightness)
-        current_.brightness = kMaxBrightness;
-    Ramp2();
-    UpdateSliders();
-    //UpdateLabel();
-}
-
-void MainWindow::DefaultBrightness() {
-    current_ = ColorSettings{};
-    Ramp();
-    UpdateSliders();
-    //UpdateLabel();
 }
 
 void MainWindow::DecreaseTemperature() {
     current_.temperatureK -= kTemperatureStep;
     if (current_.temperatureK < kMinTemperatureK)
         current_.temperatureK = kMinTemperatureK;
-    Ramp2();
+    Ramp2(current_);
     UpdateSliders();
-    //UpdateLabel();
 }
 
-void MainWindow::IncreaseTemperature() {
-    current_.temperatureK += kTemperatureStep;
-    if (current_.temperatureK > kMaxTemperatureK)
-        current_.temperatureK = kMaxTemperatureK;
-    Ramp2();
+void MainWindow::IncreaseBrightness() {
+    current_.brightness += kBrightnessStep;
+    if (current_.brightness > kMaxBrightness)
+        current_.brightness = kMaxBrightness;
+    Ramp2(current_);
     UpdateSliders();
-    //UpdateLabel();
 }
 
-
-void MainWindow::Ramp() {
-    static WORD gamma_array[3][256];
-    
-    for (int i = 0; i < 256; i++) {
-        int arr = i * (current_.brightness + 128);  // GamaRate 128 = Normal
-        if (arr > 65535)
-            arr = 65535;
-
-        gamma_array[0][i] = gamma_array[1][i] = gamma_array[2][i] = static_cast<WORD>(arr);
-    }
-    HDC hdc = GetDC(GetDesktopWindow());
-    SetDeviceGammaRamp(hdc, gamma_array);
-
-    ReleaseDC(NULL, hdc);
+void MainWindow::DecreaseBrightness() {
+    current_.brightness -= kBrightnessStep;
+    if (current_.brightness < kMinBrightness)
+        current_.brightness = kMinBrightness;
+    Ramp2(current_);
+    UpdateSliders();
 }
 
+void MainWindow::DefaultBrightness() {
+    current_ = ColorSettings{};
+    Ramp(current_);
+    UpdateSliders();
+}
 
 void MainWindow::OnTemperatureSlider(wxCommandEvent& event) {
     current_.temperatureK = event.GetInt();
-    Ramp2();
-    //UpdateLabel();tem
+    Ramp2(current_);
 }
 
 void MainWindow::OnBrightnessSlider(wxCommandEvent& event) {
     current_.brightness = event.GetInt() + 128;
-    Ramp2();
-    // UpdateLabel();tem
+    Ramp2(current_);
 }
 
 void MainWindow::UpdateSliders() {
@@ -579,12 +473,12 @@ void MainWindow::OnApply(wxCommandEvent& event) {
 }
 void MainWindow::SwitchToDay(wxCommandEvent& event) {
     current_ = settings_.dayColors;
-    Ramp2();
+    Ramp2(current_);
     UpdateSliders();
 }
 void MainWindow::SwitchToNight(wxCommandEvent& event) {
     current_ = settings_.nightColors;
-    Ramp2();
+    Ramp2(current_);
     UpdateSliders();
 }
 
