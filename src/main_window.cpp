@@ -76,8 +76,7 @@ wxEND_EVENT_TABLE()
 void MainWindow::OnCloseWindow(wxCloseEvent& WXUNUSED(event)) {
     Destroy();
 }
-MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size,
-                       long style)
+MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long /*style*/)
     : wxDialog(parent, id, title, pos, size,
                wxRESIZE_BORDER | wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX | wxMINIMIZE_BOX),
       m_taskBarIcon{std::make_unique<MyTaskBarIcon>(this)} {
@@ -255,7 +254,7 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     RegisterHotKeys();
     //StartColorThread();
 
-    colorTimer_ = new wxTimer(this, COLORS_UPDATE_TIMER);
+    colorTimer_ = std::make_unique<wxTimer>(this, COLORS_UPDATE_TIMER);
     colorTimer_->SetOwner(this, COLORS_UPDATE_TIMER);
     StartUpdateColorsTimer();
     //this->Connect(colorTimer_->GetId(), wxEVT_TIMER, wxTimerEventHandler(MyDialog1::UpdateColorsOnTimer), NULL, this);
@@ -269,7 +268,7 @@ void MainWindow::UpdateSwitchColorInfo() {
 
     const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
     const auto lastMidnight = std::chrono::time_point_cast<days>(curTime.get_local_time());
-    return;
+
     auto switchToDay = lastMidnight + std::chrono::hours{settings_.swithToDay.hour} + std::chrono::minutes{settings_.swithToDay.minute} + std::chrono::seconds{settings_.swithToDay.second};
     auto switchToNight = lastMidnight + std::chrono::hours{settings_.swithToNight.hour} + std::chrono::minutes{settings_.swithToNight.minute} + std::chrono::seconds{settings_.swithToNight.second};
 
@@ -298,7 +297,7 @@ void MainWindow::StopUpdateColorsTimer() {
     colorTimer_->Stop();
 }
 
-void MainWindow::UpdateColorsOnTimer(wxTimerEvent& event) {
+void MainWindow::UpdateColorsOnTimer(wxTimerEvent& WXUNUSED(event)) {
     const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
 
     if (curTime.get_local_time().time_since_epoch() / std::chrono::milliseconds(1) >= switchColorInfo_.epochTimeToSwitch) {
@@ -312,7 +311,6 @@ void MainWindow::UpdateColorsOnTimer(wxTimerEvent& event) {
 
 MainWindow::~MainWindow() {
     StopUpdateColorsTimer();
-    delete colorTimer_;
 #ifdef _DEBUG
     // to prevent the tzdb allocations from being reported as memory leaks
     std::chrono::get_tzdb_list().~tzdb_list();
@@ -394,58 +392,58 @@ void MainWindow::UpdateHotkeysFields() {
 
 
 
-void MainWindow::ApplyIncTemperatureHotkey(wxCommandEvent& event) {
+void MainWindow::ApplyIncTemperatureHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.incTemperature = incTemperature_->GetHotkey();
     RegisterHotKey(Hotkeys::INC_TEMPERATURE, settings_.incTemperature.GetModifiers(), settings_.incTemperature.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
-void MainWindow::ApplyDecTemperatureHotkey(wxCommandEvent& event) {
+void MainWindow::ApplyDecTemperatureHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.decTemperature = decTemperature_->GetHotkey();
     RegisterHotKey(Hotkeys::DEC_TEMPERATURE, settings_.decTemperature.GetModifiers(), settings_.decTemperature.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
-void MainWindow::ApplyIncBrightnessHotkey(wxCommandEvent& event) {
+void MainWindow::ApplyIncBrightnessHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.incBrightness = incBrightness_->GetHotkey();
     RegisterHotKey(Hotkeys::INC_BRIGHTNESS, settings_.incBrightness.GetModifiers(), settings_.incBrightness.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
-void MainWindow::ApplyDecBrightnessHotkey(wxCommandEvent& event) {
+void MainWindow::ApplyDecBrightnessHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.decBrightness = decBrightness_->GetHotkey();
     RegisterHotKey(Hotkeys::DEC_BRIGHTNESS, settings_.decBrightness.GetModifiers(), settings_.decBrightness.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
-void MainWindow::ApplyEnableDisableHotkey(wxCommandEvent& event) {
+void MainWindow::ApplyEnableDisableHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.enableDisable = enableDisable_->GetHotkey();
     RegisterHotKey(Hotkeys::ENABLE_DISABLE, settings_.enableDisable.GetModifiers(), settings_.enableDisable.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
 
-void MainWindow::ClearIncTemperatureHotkey(wxCommandEvent& event) {
+void MainWindow::ClearIncTemperatureHotkey(wxCommandEvent& WXUNUSED(event)) {
     incTemperature_->ClearHotkey();
     UnregisterHotKey(Hotkeys::INC_TEMPERATURE);
 }
 
-void MainWindow::ClearDecTemperatureHotkey(wxCommandEvent& event) {
+void MainWindow::ClearDecTemperatureHotkey(wxCommandEvent& WXUNUSED(event)) {
     decTemperature_->ClearHotkey();
     UnregisterHotKey(Hotkeys::DEC_TEMPERATURE);
 }
 
-void MainWindow::ClearIncBrightnessHotkey(wxCommandEvent& event) {
+void MainWindow::ClearIncBrightnessHotkey(wxCommandEvent& WXUNUSED(event)) {
     incBrightness_->ClearHotkey();
     UnregisterHotKey(Hotkeys::INC_BRIGHTNESS);
 }
 
-void MainWindow::ClearDecBrightnessHotkey(wxCommandEvent& event) {
+void MainWindow::ClearDecBrightnessHotkey(wxCommandEvent& WXUNUSED(event)) {
     decBrightness_->ClearHotkey();
     UnregisterHotKey(Hotkeys::DEC_BRIGHTNESS);
 }
 
-void MainWindow::ClearEnableDisableHotkey(wxCommandEvent& event) {
+void MainWindow::ClearEnableDisableHotkey(wxCommandEvent& WXUNUSED(event)) {
     enableDisable_->ClearHotkey();
     UnregisterHotKey(Hotkeys::ENABLE_DISABLE);
 }
@@ -555,7 +553,7 @@ void MainWindow::UpdateSliders() {
     }
 }
 
-void MainWindow::OnApply(wxCommandEvent& event) {
+void MainWindow::OnApply(wxCommandEvent& WXUNUSED(event)) {
     if (daySelect_->GetValue()) {
         settings_.dayColors = settings_.activeColors;
         timePicker_->GetTime(&settings_.swithToDay.hour, &settings_.swithToDay.minute, &settings_.swithToDay.second);
@@ -567,13 +565,13 @@ void MainWindow::OnApply(wxCommandEvent& event) {
     SaveSettings(settings_, kSettingsFileName);
     UpdateSwitchColorInfo();
 }
-void MainWindow::SwitchToDay(wxCommandEvent& event) {
+void MainWindow::SwitchToDay(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = settings_.dayColors;
     timePicker_->SetTime(settings_.swithToDay.hour, settings_.swithToDay.minute, settings_.swithToDay.second);
     Ramp2(settings_.activeColors);
     UpdateSliders();
 }
-void MainWindow::SwitchToNight(wxCommandEvent& event) {
+void MainWindow::SwitchToNight(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = settings_.nightColors;
     timePicker_->SetTime(settings_.swithToNight.hour, settings_.swithToNight.minute, settings_.swithToNight.second);
     Ramp2(settings_.activeColors);

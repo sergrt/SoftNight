@@ -38,3 +38,5 @@ set(OTHER_FILES
 
 add_executable(${PROJECT_NAME} WIN32 ${SOURCE} ${HEADER} ${OTHER_FILES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES})
+
+target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
