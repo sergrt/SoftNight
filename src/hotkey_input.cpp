@@ -1,14 +1,7 @@
 #include "hotkey_input.h"
 
-#include <wx/button.h>
-#include <wx/msgdlg.h>
-#include <wx/sizer.h>
-#include <wx/stattext.h>
-#include <wx/artprov.h>
-#include <wx/textctrl.h>
-
+#pragma push_macro("DELETE") // Conflicts with windows define
 #undef DELETE
-//#undef DECIMAL
 
 const char* GetVirtualKeyCodeName(int keycode) {
     switch (keycode) {
@@ -28,6 +21,7 @@ const char* GetVirtualKeyCodeName(int keycode) {
         WXK_(CANCEL)
         WXK_(MBUTTON)
         WXK_(CLEAR)
+        // ALT, CTRL, SHIFT are handled as modifiers
         // WXK_(SHIFT)
         // WXK_(ALT)
         // WXK_(CONTROL)
@@ -122,16 +116,19 @@ const char* GetVirtualKeyCodeName(int keycode) {
         WXK_(RAW_CONTROL)
 #endif
 #undef WXK_
-
         default:
             return NULL;
     }
 }
+#pragma pop_macro("DELETE")
 
-wxBEGIN_EVENT_TABLE(HotkeyInput, wxTextCtrl) EVT_KEY_DOWN(HotkeyInput::OnKeyDown) wxEND_EVENT_TABLE()
+// clang-format off
+wxBEGIN_EVENT_TABLE(HotkeyInput, wxTextCtrl)
+    EVT_KEY_DOWN(HotkeyInput::OnKeyDown)
+wxEND_EVENT_TABLE()
+// clang-format on
 
-    HotkeyInput::HotkeyInput(wxWindow* parent, wxWindowID id, const wxString& value, const wxPoint& pos,
-                             const wxSize& size, long style)
+HotkeyInput::HotkeyInput(wxWindow* parent, wxWindowID id, const wxString& value, const wxPoint& pos, const wxSize& size, long style)
     : wxTextCtrl(parent, id, value, pos, size, style) {}
 
 void HotkeyInput::OnKeyDown(wxKeyEvent& event) {
@@ -150,7 +147,6 @@ void HotkeyInput::SetHotkey(const Hotkey& hotkey) {
 
 void HotkeyInput::ClearHotkey() {
     SetHotkey(CreateInvalidHotkey());
-
 }
 
 void HotkeyInput::UpdateText(int key, wxChar unicodeKey, int modifiers) {
@@ -193,53 +189,6 @@ void HotkeyInput::UpdateText(int key, wxChar unicodeKey, int modifiers) {
         }
         text += keyName;
     }
-    SetLabelText(text);
-
-    /*std::string text;
-
-    if (modifiers & wxMOD_CONTROL) {
-        text += "+ CTRL";
-    };
-    if (modifiers & wxMOD_ALT) {
-        text += "+ ALT";
-    };
-    if (modifiers & wxMOD_SHIFT) {
-        text += "+ SHIFT";
-    };
-    if (modifiers & wxMOD_WIN) {
-        text += "+ WIN";
-    };
-
-    if (!text.empty()) {
-        text = text.substr(2);
-    }
-
-    wxChar uc = event.GetUnicodeKey();
-    if (uc != WXK_NONE) {
-        // It's a "normal" character. Notice that this includes
-        // control characters in 1..31 range, e.g. WXK_RETURN or
-        // WXK_BACK, so check for them explicitly.
-        if (uc >= 32) {
-            if (!text.empty()) {
-                text += " + ";
-            }
-            text += (char)event.GetKeyCode();
-        } else {
-            // It's a control character
-        }
-    } else  // No Unicode equivalent.
-    {
-        auto key_name = GetVirtualKeyCodeName(event.GetKeyCode());
-        if (key_name) {
-            if (!text.empty()) {
-                text += " + ";
-            }
-            text += key_name;
-        }
-        // It's a special key, deal with all the known ones:
-    }
 
     SetLabelText(text);
-    // m_dialog->last_event_ = event;
-    */
 }

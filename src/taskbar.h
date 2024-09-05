@@ -18,5 +18,5 @@ public:
 
     wxDECLARE_EVENT_TABLE();
 
-    wxDialog *m_dialog{};
+    wxDialog* m_dialog{};
 };

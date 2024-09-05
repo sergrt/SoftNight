@@ -14,4 +14,8 @@ inline const int kBrightnessStep = 5;
 struct ColorSettings {
     int temperatureK{kDefaultTemperatureK};
     int brightness{kDefaultBrightness};
+
+    bool operator==(const ColorSettings& other) const {
+        return temperatureK == other.temperatureK && brightness == other.brightness;
+    }
 };

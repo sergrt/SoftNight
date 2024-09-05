@@ -51,50 +51,38 @@ inline RGB KtoRgb(int temperatureK) {
 }
 
 inline void Ramp2(const ColorSettings& colorSettings) {
-    static WORD gamma_array[3][256];
+    static WORD gammaArray[3][256];
 
-    auto rgb = KtoRgb(colorSettings.temperatureK);
+    // This function is called from color thread, so save some resources by storing last color settings
+    static auto lastColorSettings = ColorSettings{0, 0};
 
-    //m_label->SetLabelText("R: " + std::to_string(rgb.R) + " G: " + std::to_string(rgb.G) + " B: " + std::to_string(rgb.B));
+    if (lastColorSettings != colorSettings) {
+        lastColorSettings = colorSettings;
 
-    int gamma_diff = colorSettings.brightness - 256;
+        auto rgb = KtoRgb(colorSettings.temperatureK);
+        int gammaDiff = colorSettings.brightness - 256;
 
-    const int r_portion = rgb.R + 128 + gamma_diff;
-    const int g_portion = rgb.G + 128 + gamma_diff;
-    const int b_portion = rgb.B + 128 + gamma_diff;
+        const int rPortion = rgb.R + 128 + gammaDiff;
+        const int gPortion = rgb.G + 128 + gammaDiff;
+        const int bPortion = rgb.B + 128 + gammaDiff;
 
-    for (int i = 0; i < 256; i++) {
-        int arr_r = i * r_portion;
-        arr_r = std::clamp(arr_r, 0, 65535);
-        int arr_g = i * g_portion;
-        arr_g = std::clamp(arr_g, 0, 65535);
-        int arr_b = i * b_portion;
-        arr_b = std::clamp(arr_b, 0, 65535);
+        for (int i = 0; i < 256; i++) {
+            int arr_r = i * rPortion;
+            arr_r = std::clamp(arr_r, 0, 65535);
+            int arr_g = i * gPortion;
+            arr_g = std::clamp(arr_g, 0, 65535);
+            int arr_b = i * bPortion;
+            arr_b = std::clamp(arr_b, 0, 65535);
 
-        gamma_array[0][i] = static_cast<WORD>(arr_r);
-        gamma_array[1][i] = static_cast<WORD>(arr_g);
-        gamma_array[2][i] = static_cast<WORD>(arr_b);
+            gammaArray[0][i] = static_cast<WORD>(arr_r);
+            gammaArray[1][i] = static_cast<WORD>(arr_g);
+            gammaArray[2][i] = static_cast<WORD>(arr_b);
+        }
     }
 
-    HDC hdc = GetDC(GetDesktopWindow());
-    bool result = SetDeviceGammaRamp(hdc, gamma_array);
-    (void)result;
-    ReleaseDC(NULL, hdc);
-}
-/*
-inline void Ramp(const ColorSettings& colorSettings) {
-    static WORD gamma_array[3][256];
-    
-    for (int i = 0; i < 256; i++) {
-        int arr = i * (colorSettings.brightness + 128);  // GamaRate 128 = Normal
-        if (arr > 65535)
-            arr = 65535;
-
-        gamma_array[0][i] = gamma_array[1][i] = gamma_array[2][i] = static_cast<WORD>(arr);
+    if (HDC hdc = GetDC(GetDesktopWindow())) {
+        bool result = SetDeviceGammaRamp(hdc, gammaArray);
+        (void)result;
+        ReleaseDC(NULL, hdc);
     }
-    HDC hdc = GetDC(GetDesktopWindow());
-    SetDeviceGammaRamp(hdc, gamma_array);
-
-    ReleaseDC(NULL, hdc);
 }
-*/

@@ -16,6 +16,7 @@ include_directories("${THIRDPARTY_DIR}/json/include")
 
 set(SOURCE
     app.cpp
+    hotkey.cpp
     hotkey_input.cpp
     main_window.cpp
     settings.cpp

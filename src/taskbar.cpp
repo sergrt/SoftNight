@@ -12,6 +12,7 @@ enum {
     PU_SUB2,
     PU_SUBMAIN };
 
+// clang-format off
 wxBEGIN_EVENT_TABLE(MyTaskBarIcon, wxTaskBarIcon)
     EVT_MENU(PU_RESTORE, MyTaskBarIcon::OnMenuRestore)
     EVT_MENU(PU_EXIT, MyTaskBarIcon::OnMenuExit)
@@ -22,11 +23,11 @@ wxBEGIN_EVENT_TABLE(MyTaskBarIcon, wxTaskBarIcon)
     EVT_MENU(PU_SUB1, MyTaskBarIcon::OnMenuSub)
     EVT_MENU(PU_SUB2, MyTaskBarIcon::OnMenuSub)
 wxEND_EVENT_TABLE()
-
+// clang-format on
 
 MyTaskBarIcon::MyTaskBarIcon(wxDialog* dialog)
-    : wxTaskBarIcon(wxTBI_DEFAULT_TYPE),
-    m_dialog{dialog} {}
+    : wxTaskBarIcon(wxTBI_DEFAULT_TYPE)
+    , m_dialog{dialog} {}
 
 void MyTaskBarIcon::OnMenuRestore(wxCommandEvent &) {
     m_dialog->Show(true);

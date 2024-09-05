@@ -2,14 +2,6 @@
 
 #include "color_correction.h"
 
-//#include <wx/button.h>
-//#include <wx/msgdlg.h>
-//#include <wx/sizer.h>
-//#include <wx/stattext.h>
-//#include <wx/artprov.h>
-//#include <wx/textctrl.h>
-//#include <wx/uiaction.h>
-
 #include <chrono>
 
 namespace {
@@ -394,30 +386,35 @@ void MainWindow::UpdateHotkeysFields() {
 
 void MainWindow::ApplyIncTemperatureHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.incTemperature = incTemperature_->GetHotkey();
+    UnregisterHotKey(Hotkeys::INC_TEMPERATURE);
     RegisterHotKey(Hotkeys::INC_TEMPERATURE, settings_.incTemperature.GetModifiers(), settings_.incTemperature.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyDecTemperatureHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.decTemperature = decTemperature_->GetHotkey();
+    UnregisterHotKey(Hotkeys::DEC_TEMPERATURE);
     RegisterHotKey(Hotkeys::DEC_TEMPERATURE, settings_.decTemperature.GetModifiers(), settings_.decTemperature.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyIncBrightnessHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.incBrightness = incBrightness_->GetHotkey();
+    UnregisterHotKey(Hotkeys::INC_BRIGHTNESS);
     RegisterHotKey(Hotkeys::INC_BRIGHTNESS, settings_.incBrightness.GetModifiers(), settings_.incBrightness.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyDecBrightnessHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.decBrightness = decBrightness_->GetHotkey();
+    UnregisterHotKey(Hotkeys::DEC_BRIGHTNESS);
     RegisterHotKey(Hotkeys::DEC_BRIGHTNESS, settings_.decBrightness.GetModifiers(), settings_.decBrightness.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
 
 void MainWindow::ApplyEnableDisableHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.enableDisable = enableDisable_->GetHotkey();
+    UnregisterHotKey(Hotkeys::ENABLE_DISABLE);
     RegisterHotKey(Hotkeys::ENABLE_DISABLE, settings_.enableDisable.GetModifiers(), settings_.enableDisable.GetKey());
     SaveSettings(settings_, kSettingsFileName);
 }
@@ -509,6 +506,7 @@ void MainWindow::DecreaseBrightness() {
     Ramp2(settings_.activeColors);
     UpdateSliders();
 }
+
 /*
 void MainWindow::DefaultBrightness() {
     current_ = ColorSettings{};
@@ -516,7 +514,6 @@ void MainWindow::DefaultBrightness() {
     UpdateSliders();
 }
 */
-
 
 void MainWindow::EnableDisable() {
     settings_.isEnabled = !settings_.isEnabled;
@@ -565,12 +562,14 @@ void MainWindow::OnApply(wxCommandEvent& WXUNUSED(event)) {
     SaveSettings(settings_, kSettingsFileName);
     UpdateSwitchColorInfo();
 }
+
 void MainWindow::SwitchToDay(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = settings_.dayColors;
     timePicker_->SetTime(settings_.swithToDay.hour, settings_.swithToDay.minute, settings_.swithToDay.second);
     Ramp2(settings_.activeColors);
     UpdateSliders();
 }
+
 void MainWindow::SwitchToNight(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = settings_.nightColors;
     timePicker_->SetTime(settings_.swithToNight.hour, settings_.swithToNight.minute, settings_.swithToNight.second);
