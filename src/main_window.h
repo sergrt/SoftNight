@@ -22,6 +22,7 @@
 //#include <wx/stattext.h>
 //#include <wx/string.h>
 //#include <wx/textctrl.h>
+#include <wx/timer.h>
 #include <wx/timectrl.h>
 //#include <wx/xrc/xmlres.h>
 
@@ -41,7 +42,8 @@ private:
     void DecreaseTemperature();
     void IncreaseBrightness();
     void DecreaseBrightness();
-    void DefaultBrightness();
+    //void DefaultBrightness();
+    void EnableDisable();
 
     void ApplyIncTemperatureHotkey(wxCommandEvent& event);
     void ApplyDecTemperatureHotkey(wxCommandEvent& event);
@@ -87,10 +89,17 @@ private:
     HotkeyInput* decBrightness_{};
     HotkeyInput* incBrightness_{};
     HotkeyInput* enableDisable_{};
+    wxTimer* colorTimer_{};
 
     Settings settings_{};
+    struct SwitchColorInfo {
+        unsigned long long epochTimeToSwitch{};
+        ColorSettings switchToColor{};
+    } switchColorInfo_;
 
-    ColorSettings current_{};
+    void UpdateSwitchColorInfo();
+
+    //ColorSettings current_{};
 
     std::unique_ptr<MyTaskBarIcon> m_taskBarIcon;
     std::jthread colorThread_;

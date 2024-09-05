@@ -246,6 +246,7 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     UpdateSliders();
     UpdateHotkeysFields();
     UpdateTimeField();
+    UpdateSwitchColorInfo();
 
     this->SetSize({650, 700});
     this->Layout();
@@ -254,19 +255,55 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     RegisterHotKeys();
     //StartColorThread();
 
-    wxTimer* colorTimer_ = new wxTimer(this, COLORS_UPDATE_TIMER);
+    colorTimer_ = new wxTimer(this, COLORS_UPDATE_TIMER);
     colorTimer_->Start(kColorUpdateInterval.count());
     //this->Connect(colorTimer_->GetId(), wxEVT_TIMER, wxTimerEventHandler(MyDialog1::UpdateColorsOnTimer), NULL, this);
     
     // SaveSettings(settings_, kSettingsFileName);
+    
+}
+
+void MainWindow::UpdateSwitchColorInfo() {
+    using days = std::chrono::duration<int, std::ratio<86400>>;
+
+    const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
+    const auto lastMidnight = std::chrono::time_point_cast<days>(curTime.get_local_time());
+
+    auto switchToDay = lastMidnight + std::chrono::hours{settings_.swithToDay.hour} + std::chrono::minutes{settings_.swithToDay.minute} + std::chrono::seconds{settings_.swithToDay.second};
+    auto switchToNight = lastMidnight + std::chrono::hours{settings_.swithToNight.hour} + std::chrono::minutes{settings_.swithToNight.minute} + std::chrono::seconds{settings_.swithToNight.second};
+
+    if (switchToDay < curTime.get_local_time()) {
+        switchToDay += std::chrono::hours{24};
+    }
+
+    if (switchToNight < curTime.get_local_time()) {
+        switchToNight += std::chrono::hours{24};
+    }
+
+    if (switchToDay < switchToNight) {
+        switchColorInfo_.epochTimeToSwitch = switchToDay.time_since_epoch() / std::chrono::milliseconds(1);
+        switchColorInfo_.switchToColor = settings_.dayColors;
+    } else {
+        switchColorInfo_.epochTimeToSwitch = switchToNight.time_since_epoch() / std::chrono::milliseconds(1);
+        switchColorInfo_.switchToColor = settings_.nightColors;
+    }
 }
 
 void MainWindow::UpdateColorsOnTimer(wxTimerEvent& event) {
-    Ramp2(current_);
+    const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
+
+    if (curTime.get_local_time().time_since_epoch() / std::chrono::milliseconds(1) >= switchColorInfo_.epochTimeToSwitch) {
+        settings_.activeColors = switchColorInfo_.switchToColor;
+        UpdateSwitchColorInfo();
+    }
+
+    Ramp2(settings_.activeColors);
 }
 
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+    colorTimer_->Stop();
+}
 
 enum Hotkeys {
     DEC_TEMPERATURE = 0,
@@ -412,7 +449,8 @@ void MainWindow::OnHotkey(wxKeyEvent& event) {
     } else if (hotkey == settings_.decBrightness) {
         DecreaseBrightness();
     } else if (hotkey == settings_.enableDisable) {
-        DefaultBrightness();
+        //DefaultBrightness();
+        EnableDisable();
     }
 }
 
@@ -429,79 +467,89 @@ void MainWindow::OnIconize(wxIconizeEvent& event) {
 }
 
 void MainWindow::IncreaseTemperature() {
-    current_.temperatureK += kTemperatureStep;
-    if (current_.temperatureK > kMaxTemperatureK)
-        current_.temperatureK = kMaxTemperatureK;
-    Ramp2(current_);
+    settings_.activeColors.temperatureK += kTemperatureStep;
+    if (settings_.activeColors.temperatureK > kMaxTemperatureK)
+        settings_.activeColors.temperatureK = kMaxTemperatureK;
+    Ramp2(settings_.activeColors);
     UpdateSliders();
 }
 
 void MainWindow::DecreaseTemperature() {
-    current_.temperatureK -= kTemperatureStep;
-    if (current_.temperatureK < kMinTemperatureK)
-        current_.temperatureK = kMinTemperatureK;
-    Ramp2(current_);
+    settings_.activeColors.temperatureK -= kTemperatureStep;
+    if (settings_.activeColors.temperatureK < kMinTemperatureK)
+        settings_.activeColors.temperatureK = kMinTemperatureK;
+    Ramp2(settings_.activeColors);
     UpdateSliders();
 }
 
 void MainWindow::IncreaseBrightness() {
-    current_.brightness += kBrightnessStep;
-    if (current_.brightness > kMaxBrightness)
-        current_.brightness = kMaxBrightness;
-    Ramp2(current_);
+    settings_.activeColors.brightness += kBrightnessStep;
+    if (settings_.activeColors.brightness > kMaxBrightness)
+        settings_.activeColors.brightness = kMaxBrightness;
+    Ramp2(settings_.activeColors);
     UpdateSliders();
 }
 
 void MainWindow::DecreaseBrightness() {
-    current_.brightness -= kBrightnessStep;
-    if (current_.brightness < kMinBrightness)
-        current_.brightness = kMinBrightness;
-    Ramp2(current_);
+    settings_.activeColors.brightness -= kBrightnessStep;
+    if (settings_.activeColors.brightness < kMinBrightness)
+        settings_.activeColors.brightness = kMinBrightness;
+    Ramp2(settings_.activeColors);
     UpdateSliders();
 }
-
+/*
 void MainWindow::DefaultBrightness() {
     current_ = ColorSettings{};
     Ramp(current_);
     UpdateSliders();
 }
+*/
+
+
+void MainWindow::EnableDisable() { 
+    std::swap(settings_.activeColors, settings_.backupColors);
+    settings_.isEnabled = !settings_.isEnabled;
+    Ramp2(settings_.activeColors);
+    UpdateSliders();
+}
 
 void MainWindow::OnTemperatureSlider(wxCommandEvent& event) {
-    current_.temperatureK = event.GetInt();
-    Ramp2(current_);
+    settings_.activeColors.temperatureK = event.GetInt();
+    Ramp2(settings_.activeColors);
 }
 
 void MainWindow::OnBrightnessSlider(wxCommandEvent& event) {
-    current_.brightness = event.GetInt() + 128;
-    Ramp2(current_);
+    settings_.activeColors.brightness = event.GetInt() + 128;
+    Ramp2(settings_.activeColors);
 }
 
 void MainWindow::UpdateSliders() {
-    temperatureSlider_->SetValue(current_.temperatureK);
-    brightnessSlider_->SetValue(current_.brightness - 128);
+    temperatureSlider_->SetValue(settings_.activeColors.temperatureK);
+    brightnessSlider_->SetValue(settings_.activeColors.brightness - 128);
 }
 
 void MainWindow::OnApply(wxCommandEvent& event) {
     if (daySelect_->GetValue()) {
-        settings_.dayColors = current_;
+        settings_.dayColors = settings_.activeColors;
         timePicker_->GetTime(&settings_.swithToDay.hour, &settings_.swithToDay.minute, &settings_.swithToDay.second);
     } else {
-        settings_.nightColors = current_;
+        settings_.nightColors = settings_.activeColors;
         timePicker_->GetTime(&settings_.swithToNight.hour, &settings_.swithToNight.minute, &settings_.swithToNight.second);
     }
 
     SaveSettings(settings_, kSettingsFileName);
+    UpdateSwitchColorInfo();
 }
 void MainWindow::SwitchToDay(wxCommandEvent& event) {
-    current_ = settings_.dayColors;
+    settings_.activeColors = settings_.dayColors;
     timePicker_->SetTime(settings_.swithToDay.hour, settings_.swithToDay.minute, settings_.swithToDay.second);
-    Ramp2(current_);
+    Ramp2(settings_.activeColors);
     UpdateSliders();
 }
 void MainWindow::SwitchToNight(wxCommandEvent& event) {
-    current_ = settings_.nightColors;
+    settings_.activeColors = settings_.nightColors;
     timePicker_->SetTime(settings_.swithToNight.hour, settings_.swithToNight.minute, settings_.swithToNight.second);
-    Ramp2(current_);
+    Ramp2(settings_.activeColors);
     UpdateSliders();
 }
 
