@@ -40,6 +40,7 @@ Settings LoadSettings(const std::string& settingsFileName) {
         if (json.contains("hour") && json.contains("minute") && json.contains("second")) {
             return Time{json.at("hour"), json.at("minute"), json.at("second")};
         }
+        return Time{0, 0, 0};
     };
 
     if (json.contains("swith_to_day")) {

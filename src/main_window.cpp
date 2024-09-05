@@ -256,7 +256,8 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     //StartColorThread();
 
     colorTimer_ = new wxTimer(this, COLORS_UPDATE_TIMER);
-    colorTimer_->Start(kColorUpdateInterval.count());
+    colorTimer_->SetOwner(this, COLORS_UPDATE_TIMER);
+    StartUpdateColorsTimer();
     //this->Connect(colorTimer_->GetId(), wxEVT_TIMER, wxTimerEventHandler(MyDialog1::UpdateColorsOnTimer), NULL, this);
     
     // SaveSettings(settings_, kSettingsFileName);
@@ -268,7 +269,7 @@ void MainWindow::UpdateSwitchColorInfo() {
 
     const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
     const auto lastMidnight = std::chrono::time_point_cast<days>(curTime.get_local_time());
-
+    return;
     auto switchToDay = lastMidnight + std::chrono::hours{settings_.swithToDay.hour} + std::chrono::minutes{settings_.swithToDay.minute} + std::chrono::seconds{settings_.swithToDay.second};
     auto switchToNight = lastMidnight + std::chrono::hours{settings_.swithToNight.hour} + std::chrono::minutes{settings_.swithToNight.minute} + std::chrono::seconds{settings_.swithToNight.second};
 
@@ -289,6 +290,14 @@ void MainWindow::UpdateSwitchColorInfo() {
     }
 }
 
+void MainWindow::StartUpdateColorsTimer() {
+    colorTimer_->Start(kColorUpdateInterval.count());
+}
+
+void MainWindow::StopUpdateColorsTimer() {
+    colorTimer_->Stop();
+}
+
 void MainWindow::UpdateColorsOnTimer(wxTimerEvent& event) {
     const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
 
@@ -302,7 +311,12 @@ void MainWindow::UpdateColorsOnTimer(wxTimerEvent& event) {
 
 
 MainWindow::~MainWindow() {
-    colorTimer_->Stop();
+    StopUpdateColorsTimer();
+    delete colorTimer_;
+#ifdef _DEBUG
+    // to prevent the tzdb allocations from being reported as memory leaks
+    std::chrono::get_tzdb_list().~tzdb_list();
+#endif
 }
 
 enum Hotkeys {
@@ -506,9 +520,14 @@ void MainWindow::DefaultBrightness() {
 */
 
 
-void MainWindow::EnableDisable() { 
-    std::swap(settings_.activeColors, settings_.backupColors);
+void MainWindow::EnableDisable() {
     settings_.isEnabled = !settings_.isEnabled;
+    std::swap(settings_.activeColors, settings_.backupColors);
+    if (settings_.isEnabled) {
+        StartUpdateColorsTimer();
+    } else {
+        StopUpdateColorsTimer();
+    }
     Ramp2(settings_.activeColors);
     UpdateSliders();
 }
@@ -526,6 +545,14 @@ void MainWindow::OnBrightnessSlider(wxCommandEvent& event) {
 void MainWindow::UpdateSliders() {
     temperatureSlider_->SetValue(settings_.activeColors.temperatureK);
     brightnessSlider_->SetValue(settings_.activeColors.brightness - 128);
+
+    if (settings_.isEnabled) {
+        temperatureSlider_->Enable();
+        brightnessSlider_->Enable();
+    } else {
+        temperatureSlider_->Disable();
+        brightnessSlider_->Disable();
+    }
 }
 
 void MainWindow::OnApply(wxCommandEvent& event) {

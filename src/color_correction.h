@@ -59,12 +59,16 @@ inline void Ramp2(const ColorSettings& colorSettings) {
 
     int gamma_diff = colorSettings.brightness - 256;
 
+    const int r_portion = rgb.R + 128 + gamma_diff;
+    const int g_portion = rgb.G + 128 + gamma_diff;
+    const int b_portion = rgb.B + 128 + gamma_diff;
+
     for (int i = 0; i < 256; i++) {
-        int arr_r = i * (rgb.R + 128 + gamma_diff);
+        int arr_r = i * r_portion;
         arr_r = std::clamp(arr_r, 0, 65535);
-        int arr_g = i * (rgb.G + 128 + gamma_diff);
+        int arr_g = i * g_portion;
         arr_g = std::clamp(arr_g, 0, 65535);
-        int arr_b = i * (rgb.B + 128 + gamma_diff);
+        int arr_b = i * b_portion;
         arr_b = std::clamp(arr_b, 0, 65535);
 
         gamma_array[0][i] = static_cast<WORD>(arr_r);
@@ -73,11 +77,11 @@ inline void Ramp2(const ColorSettings& colorSettings) {
     }
 
     HDC hdc = GetDC(GetDesktopWindow());
-    SetDeviceGammaRamp(hdc, gamma_array);
-
+    bool result = SetDeviceGammaRamp(hdc, gamma_array);
+    (void)result;
     ReleaseDC(NULL, hdc);
 }
-
+/*
 inline void Ramp(const ColorSettings& colorSettings) {
     static WORD gamma_array[3][256];
     
@@ -93,3 +97,4 @@ inline void Ramp(const ColorSettings& colorSettings) {
 
     ReleaseDC(NULL, hdc);
 }
+*/

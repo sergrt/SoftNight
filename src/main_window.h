@@ -27,7 +27,7 @@
 //#include <wx/xrc/xmlres.h>
 
 #include <memory>
-#include <thread>
+
 
 class MainWindow : public wxDialog {
 public:
@@ -98,11 +98,12 @@ private:
     } switchColorInfo_;
 
     void UpdateSwitchColorInfo();
+    void StartUpdateColorsTimer();
+    void StopUpdateColorsTimer();
 
     //ColorSettings current_{};
 
     std::unique_ptr<MyTaskBarIcon> m_taskBarIcon;
-    std::jthread colorThread_;
 
 
     wxDECLARE_EVENT_TABLE();
