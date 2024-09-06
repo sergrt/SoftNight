@@ -32,9 +32,10 @@ Settings LoadSettings(const std::string& settingsFileName) {
     if (json.contains("night_colors")) {
         settings.nightColors = readColors(json["night_colors"]);
     }
-    if (json.contains("current_colors")) {
-        settings.activeColors = readColors(json["active_colors"]);
-    }
+    
+    //if (json.contains("active_colors")) {
+    //    settings.activeColors = readColors(json["active_colors"]);
+    //}
 
     auto readTime = [](const nlohmann::json& json) {
         if (json.contains("hour") && json.contains("minute") && json.contains("second")) {
@@ -85,7 +86,7 @@ void SaveSettings(const Settings& settings, const std::string& settingsFileName)
     };
     writeColors(settings.dayColors, json["day_colors"]);
     writeColors(settings.nightColors, json["night_colors"]);
-    writeColors(settings.isEnabled ? settings.activeColors : settings.backupColors, json["active_colors"]);
+    //writeColors(settings.isEnabled ? settings.activeColors : settings.backupColors, json["active_colors"]);
 
     auto writeTime = [](const Time& time, nlohmann::json& json) {
         json["hour"] = time.hour;

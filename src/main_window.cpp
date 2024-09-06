@@ -25,6 +25,7 @@ enum {
     DEC_BRIGHTNESS_CLEAR,
     ENABLE_DISABLE_CLEAR,
 
+    BN_RESET,
     BN_APPLY,
     RB_DAY,
     RB_NIGHT,
@@ -59,6 +60,7 @@ wxBEGIN_EVENT_TABLE(MainWindow, wxDialog)
     EVT_BUTTON(DEC_BRIGHTNESS_CLEAR, MainWindow::ClearDecBrightnessHotkey)
     EVT_BUTTON(ENABLE_DISABLE_CLEAR, MainWindow::ClearEnableDisableHotkey)
 
+    EVT_BUTTON(BN_RESET, MainWindow::OnReset)
     EVT_BUTTON(BN_APPLY, MainWindow::OnApply)
     EVT_RADIOBUTTON(RB_DAY, MainWindow::SwitchToDay)
     EVT_RADIOBUTTON(RB_NIGHT, MainWindow::SwitchToNight)
@@ -89,10 +91,21 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title)
 
     settings_ = LoadSettings(kSettingsFileName);
 
-    UpdateSliders();
+    UpdateColorControls();
     UpdateHotkeysFields();
     UpdateTimeField();
-    UpdateSwitchColorInfo();
+    UpdateSwitchColorInfo(&settings_.activeColors);
+    if (settings_.activeColors == settings_.dayColors) {
+        daySelect_->SetValue(true);
+        daySelect_->SetFocus();
+        wxCommandEvent e{};
+        SwitchToDay(e);
+    } else {
+        nightSelect_->SetValue(true);
+        nightSelect_->SetFocus();
+        wxCommandEvent e{};
+        SwitchToNight(e);
+    }
 
     RegisterHotKeys();
 
@@ -183,8 +196,10 @@ void MainWindow::SetupUi() {
     timeSizer->Add(timePicker_, 0, wxALIGN_CENTER | wxALL, 5);
     timeSizer->Add(0, 0, 1, wxEXPAND, 5);
 
-    auto apply = new wxButton(colorControlsBox->GetStaticBox(), BN_APPLY, _("Apply"));
-    timeSizer->Add(apply, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+    resetButton_ = new wxButton(colorControlsBox->GetStaticBox(), BN_RESET, _("Reset"));
+    timeSizer->Add(resetButton_, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+    applyButton_ = new wxButton(colorControlsBox->GetStaticBox(), BN_APPLY, _("Apply"));
+    timeSizer->Add(applyButton_, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
     auto colorControlsSizer = new wxFlexGridSizer(3, 1, 0, 0);
     colorControlsSizer->AddGrowableCol(0);
@@ -270,7 +285,7 @@ void MainWindow::SetupUi() {
     this->Centre(wxBOTH);
 }
 
-void MainWindow::UpdateSwitchColorInfo() {
+void MainWindow::UpdateSwitchColorInfo(ColorSettings* oppositeColorSettings) {
     using days = std::chrono::duration<int, std::ratio<86400>>;
 
     const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
@@ -290,9 +305,13 @@ void MainWindow::UpdateSwitchColorInfo() {
     if (switchToDay < switchToNight) {
         switchColorInfo_.epochTimeToSwitch = switchToDay.time_since_epoch() / std::chrono::milliseconds(1);
         switchColorInfo_.switchToColor = settings_.dayColors;
+        if (oppositeColorSettings)
+            *oppositeColorSettings = settings_.nightColors;
     } else {
         switchColorInfo_.epochTimeToSwitch = switchToNight.time_since_epoch() / std::chrono::milliseconds(1);
         switchColorInfo_.switchToColor = settings_.nightColors;
+        if (oppositeColorSettings)
+            *oppositeColorSettings = settings_.dayColors;
     }
 }
 
@@ -321,6 +340,13 @@ void MainWindow::RegisterHotKeys() {
     RegisterHotKey(Hotkeys::DEC_BRIGHTNESS, settings_.decBrightness.GetModifiers(), settings_.decBrightness.GetKey());
     RegisterHotKey(Hotkeys::INC_BRIGHTNESS, settings_.incBrightness.GetModifiers(), settings_.incBrightness.GetKey());
     RegisterHotKey(Hotkeys::ENABLE_DISABLE, settings_.enableDisable.GetModifiers(), settings_.enableDisable.GetKey());
+}
+
+void MainWindow::UnregisterHotKeys() {
+    UnregisterHotKey(Hotkeys::DEC_TEMPERATURE);
+    UnregisterHotKey(Hotkeys::INC_TEMPERATURE);
+    UnregisterHotKey(Hotkeys::DEC_BRIGHTNESS);
+    UnregisterHotKey(Hotkeys::INC_BRIGHTNESS);
 }
 
 void MainWindow::UpdateHotkeysFields() {
@@ -425,7 +451,7 @@ void MainWindow::IncreaseTemperature() {
     if (settings_.activeColors.temperatureK > kMaxTemperatureK)
         settings_.activeColors.temperatureK = kMaxTemperatureK;
     Ramp2(settings_.activeColors);
-    UpdateSliders();
+    UpdateColorControls();
 }
 
 void MainWindow::DecreaseTemperature() {
@@ -433,7 +459,7 @@ void MainWindow::DecreaseTemperature() {
     if (settings_.activeColors.temperatureK < kMinTemperatureK)
         settings_.activeColors.temperatureK = kMinTemperatureK;
     Ramp2(settings_.activeColors);
-    UpdateSliders();
+    UpdateColorControls();
 }
 
 void MainWindow::IncreaseBrightness() {
@@ -441,7 +467,7 @@ void MainWindow::IncreaseBrightness() {
     if (settings_.activeColors.brightness > kMaxBrightness)
         settings_.activeColors.brightness = kMaxBrightness;
     Ramp2(settings_.activeColors);
-    UpdateSliders();
+    UpdateColorControls();
 }
 
 void MainWindow::DecreaseBrightness() {
@@ -449,19 +475,21 @@ void MainWindow::DecreaseBrightness() {
     if (settings_.activeColors.brightness < kMinBrightness)
         settings_.activeColors.brightness = kMinBrightness;
     Ramp2(settings_.activeColors);
-    UpdateSliders();
+    UpdateColorControls();
 }
 
 void MainWindow::EnableDisable() {
     settings_.isEnabled = !settings_.isEnabled;
     std::swap(settings_.activeColors, settings_.backupColors);
     if (settings_.isEnabled) {
+        RegisterHotKeys();
         StartUpdateColorsTimer();
     } else {
+        UnregisterHotKeys();
         StopUpdateColorsTimer();
     }
     Ramp2(settings_.activeColors);
-    UpdateSliders();
+    UpdateColorControls();
 }
 
 void MainWindow::OnTemperatureSlider(wxCommandEvent& event) {
@@ -474,16 +502,33 @@ void MainWindow::OnBrightnessSlider(wxCommandEvent& event) {
     Ramp2(settings_.activeColors);
 }
 
-void MainWindow::UpdateSliders() {
+void MainWindow::UpdateColorControls() {
     temperatureSlider_->SetValue(settings_.activeColors.temperatureK);
     brightnessSlider_->SetValue(settings_.activeColors.brightness - 128);
 
     if (settings_.isEnabled) {
         temperatureSlider_->Enable();
         brightnessSlider_->Enable();
+        daySelect_->Enable();
+        nightSelect_->Enable();
+        resetButton_->Enable();
+        applyButton_->Enable();
+
+        if (daySelect_->GetValue())
+            daySelect_->SetFocus();
+        else
+            nightSelect_->SetFocus();
+
     } else {
         temperatureSlider_->Disable();
         brightnessSlider_->Disable();
+        daySelect_->Disable();
+        nightSelect_->Disable();
+        resetButton_->Disable();
+        applyButton_->Disable();
+
+        // Set focus on something else than hotkey input
+        timePicker_->SetFocus();
     }
 }
 
@@ -500,18 +545,25 @@ void MainWindow::OnApply(wxCommandEvent& WXUNUSED(event)) {
     UpdateSwitchColorInfo();
 }
 
+void MainWindow::OnReset(wxCommandEvent& WXUNUSED(event)) {
+    settings_.activeColors = {kDefaultTemperatureK, kDefaultBrightness};
+    UpdateColorControls();
+    //temperatureSlider_->SetValue(kDefaultTemperatureK);
+    //brightnessSlider_->SetValue(kDefaultBrightness - 128);
+}
+
 void MainWindow::SwitchToDay(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = settings_.dayColors;
     timePicker_->SetTime(settings_.swithToDay.hour, settings_.swithToDay.minute, settings_.swithToDay.second);
     Ramp2(settings_.activeColors);
-    UpdateSliders();
+    UpdateColorControls();
 }
 
 void MainWindow::SwitchToNight(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = settings_.nightColors;
     timePicker_->SetTime(settings_.swithToNight.hour, settings_.swithToNight.minute, settings_.swithToNight.second);
     Ramp2(settings_.activeColors);
-    UpdateSliders();
+    UpdateColorControls();
 }
 
 void MainWindow::UpdateTimeField() {

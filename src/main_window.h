@@ -2,6 +2,7 @@
 #include "settings.h"
 #include "taskbar_icon.h"
 
+#include <wx/button.h>
 #include <wx/dialog.h>
 #include <wx/radiobut.h>
 #include <wx/slider.h>
@@ -22,10 +23,11 @@ private:
     void SetupUi();
 
     void RegisterHotKeys();
+    void UnregisterHotKeys();
     void UpdateHotkeysFields();
     void UpdateTimeField();
-    void UpdateSliders();
-    void UpdateSwitchColorInfo();
+    void UpdateColorControls();
+    void UpdateSwitchColorInfo(ColorSettings* oppositeColorSettings = nullptr);
     void StartUpdateColorsTimer();
     void StopUpdateColorsTimer();
 
@@ -51,6 +53,7 @@ private:
 
     void OnTemperatureSlider(wxCommandEvent& event);
     void OnBrightnessSlider(wxCommandEvent& event);
+    void OnReset(wxCommandEvent& event);
     void OnApply(wxCommandEvent& event);
     void OnHotkey(wxKeyEvent& event);
     void OnCloseWindow(wxCloseEvent& event);
@@ -65,6 +68,8 @@ private:
     wxSlider* temperatureSlider_{};
     wxSlider* brightnessSlider_{};
     wxTimePickerCtrl* timePicker_{};
+    wxButton* applyButton_{};
+    wxButton* resetButton_{};
     HotkeyInput* decTemperature_{};
     HotkeyInput* incTemperature_{};
     HotkeyInput* decBrightness_{};
