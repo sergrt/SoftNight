@@ -1,8 +1,7 @@
 #pragma once
+
 #include "color_settings.h"
 #include "hotkey.h"
-
-#include <chrono>
 
 struct Time {
     int hour{};

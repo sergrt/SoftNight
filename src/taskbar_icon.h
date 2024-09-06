@@ -1,7 +1,8 @@
 #pragma once
 
-#include <wx/dialog.h>
 #include <wx/taskbar.h>
+
+class wxDialog;
 
 class TaskbarIcon : public wxTaskBarIcon {
 public:

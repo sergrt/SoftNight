@@ -8,11 +8,11 @@ public:
 
     int GetKey() const;
     int GetModifiers() const;
-    const wxChar GetUnicodeKey() const;
+    wxChar GetUnicodeKey() const;
 
-    void setKey(int key);
-    void setModifiers(int modifiers);
-    void setUnicodeKey(wxChar unicodeKey);
+    void SetKey(int key);
+    void SetModifiers(int modifiers);
+    void SetUnicodeKey(wxChar unicodeKey);
 
     bool operator==(const Hotkey& other) const;
 

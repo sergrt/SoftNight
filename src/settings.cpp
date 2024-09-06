@@ -13,7 +13,7 @@ Settings LoadSettings(const std::string& settingsFileName) {
         try {
             json = nlohmann::json::parse(stream);
         } catch (...) {
-            return {};
+            return settings;
         }
     }
 

@@ -128,8 +128,8 @@ wxBEGIN_EVENT_TABLE(HotkeyInput, wxTextCtrl)
 wxEND_EVENT_TABLE()
 // clang-format on
 
-HotkeyInput::HotkeyInput(wxWindow* parent, wxWindowID id, const wxString& value, const wxPoint& pos, const wxSize& size, long style)
-    : wxTextCtrl(parent, id, value, pos, size, style) {}
+HotkeyInput::HotkeyInput(wxWindow* parent, wxWindowID id)
+    : wxTextCtrl(parent, id) {}
 
 void HotkeyInput::OnKeyDown(wxKeyEvent& event) {
     auto hotkey = Hotkey{event.GetKeyCode(), event.GetModifiers(), event.GetUnicodeKey()};

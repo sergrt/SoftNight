@@ -1,4 +1,5 @@
 #pragma once
+
 #include "color_settings.h"
 
 struct RGB {

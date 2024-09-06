@@ -33,16 +33,16 @@ set(HEADER
     taskbar_icon.h
 )
 
-set(OTHER_FILES
+set(RESOURCES
     resource.h
     soft_night.rc
     day_and_night.ico
     ${wxWidgets_INCLUDE_DIRS}/wx/msw/wx_dpi_aware.manifest
 )
-
+source_group("Resources" FILES ${RESOURCES})
 configure_file(day_and_night.ico ${CMAKE_CURRENT_BINARY_DIR}/day_and_night.ico COPYONLY)
 
-add_executable(${PROJECT_NAME} WIN32 ${SOURCE} ${HEADER} ${OTHER_FILES})
+add_executable(${PROJECT_NAME} WIN32 ${SOURCE} ${HEADER} ${RESOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES})
 
 target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)

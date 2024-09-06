@@ -1,7 +1,7 @@
 #include "main_window.h"
-#include "resource.h"
 
 #include "color_correction.h"
+#include "hotkey_input.h"
 
 #include <chrono>
 
@@ -85,7 +85,7 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title)
     //wxIcon icon(reinterpret_cast<const char*>(day_and_night64), 64, 64);
     //wxIcon icon(wxIconLocation(R"(day_and_night.ico)", 0));
 
-
+    wxImage::AddHandler(new wxICOHandler);
     wxIcon icon(wxIconLocation(R"(day_and_night.ico)"));
 
     

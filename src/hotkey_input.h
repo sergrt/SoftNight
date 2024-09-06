@@ -1,19 +1,17 @@
 #pragma once
+
 #include "hotkey.h"
 
 #include <wx/textctrl.h>
 
 #include <memory>
 
-
 class HotkeyInput : public wxTextCtrl
 {
 public:
-    HotkeyInput(wxWindow* parent, wxWindowID id, const wxString& value = wxEmptyString, const wxPoint& pos = wxDefaultPosition,
-                const wxSize& size = wxDefaultSize, long style = 0L);
+    HotkeyInput(wxWindow* parent, wxWindowID id = wxID_ANY);
 
     void OnKeyDown(wxKeyEvent& event);
-
     void SetHotkey(const Hotkey& hotkey);
     Hotkey GetHotkey() const;
     void ClearHotkey();

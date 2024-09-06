@@ -1,5 +1,5 @@
 #pragma once
-#include "hotkey_input.h"
+//#include "hotkey_input.h"
 #include "settings.h"
 #include "taskbar_icon.h"
 
@@ -11,6 +11,7 @@
 
 #include <memory>
 
+class HotkeyInput;
 
 class MainWindow : public wxDialog {
 public:
