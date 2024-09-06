@@ -1,0 +1,8 @@
+[submodule "3rdparty/json"]
+	path = 3rdparty/json
+	url = https://github.com/nlohmann/json.git
+	branch = v3.11.3
+[submodule "3rdparty/wxWidgets"]
+	path = 3rdparty/wxWidgets
+	url = https://github.com/wxWidgets/wxWidgets.git
+	branch = v3.2.5

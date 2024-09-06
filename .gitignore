@@ -44,6 +44,6 @@ latest/
 release/
 .vscode/
 
-# WIndows - related 3rd-party
-3rdparty/
+# Windows - related 3rd-party
+#3rdparty/
 
