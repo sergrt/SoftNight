@@ -170,16 +170,17 @@ void HotkeyInput::UpdateText(int key, wxChar unicodeKey, int modifiers) {
     }
 
     std::string keyName;
-    if (unicodeKey == WXK_NONE || unicodeKey == WXK_DELETE) { // Some problem with delete
+    if (unicodeKey == WXK_NONE || unicodeKey == WXK_DELETE) { // Some problem with Delete
         auto virtualKeyName = GetVirtualKeyCodeName(key);
         if (virtualKeyName) {
             keyName = std::string(virtualKeyName);
         }
     } else {
         if (unicodeKey >= 32) {
-            keyName = (char)key;
+            keyName = static_cast<char>(key);
         } else {
             // It's a control character
+            // Maybe something should be done here?
         }
     }
 

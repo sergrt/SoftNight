@@ -4,8 +4,6 @@
 
 #include <wx/textctrl.h>
 
-#include <memory>
-
 class HotkeyInput : public wxTextCtrl
 {
 public:

@@ -60,8 +60,8 @@ inline void Ramp2(const ColorSettings& colorSettings) {
     if (lastColorSettings != colorSettings) {
         lastColorSettings = colorSettings;
 
-        auto rgb = KtoRgb(colorSettings.temperatureK);
-        int gammaDiff = colorSettings.brightness - 256;
+        const auto rgb = KtoRgb(colorSettings.temperatureK);
+        const int gammaDiff = colorSettings.brightness - 256;
 
         const int rPortion = rgb.R + 128 + gammaDiff;
         const int gPortion = rgb.G + 128 + gammaDiff;
