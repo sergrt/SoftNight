@@ -13,7 +13,7 @@ enum {
 wxBEGIN_EVENT_TABLE(TaskbarIcon, wxTaskBarIcon)
     EVT_MENU(PU_RESTORE, TaskbarIcon::OnMenuRestore)
     EVT_MENU(PU_EXIT, TaskbarIcon::OnMenuExit)
-    EVT_TASKBAR_LEFT_DCLICK(TaskbarIcon::OnLeftButtonDClick)
+    EVT_TASKBAR_LEFT_UP(TaskbarIcon::ShowHide)
 wxEND_EVENT_TABLE()
 // clang-format on
 
@@ -37,10 +37,13 @@ void TaskbarIcon::OnMenuExit(wxCommandEvent& WXUNUSED(event)) {
     mainWindow_->Close(true);
 }
 
-void TaskbarIcon::OnLeftButtonDClick(wxTaskBarIconEvent& WXUNUSED(event)) {
-    RestoreMainWindow();
+void TaskbarIcon::ShowHide(wxTaskBarIconEvent& WXUNUSED(event)) {
+    if (!mainWindow_->IsVisible()) {
+        RestoreMainWindow();
+    } else {
+        mainWindow_->Show(false);
+    }
 }
-
 void TaskbarIcon::RestoreMainWindow() const {
     mainWindow_->Show(true);
     mainWindow_->Restore();

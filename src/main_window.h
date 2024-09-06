@@ -1,5 +1,4 @@
 #pragma once
-//#include "hotkey_input.h"
 #include "settings.h"
 #include "taskbar_icon.h"
 
@@ -42,8 +41,8 @@ private:
     void ApplyDecTemperatureHotkey(wxCommandEvent& event);
     void ApplyIncBrightnessHotkey(wxCommandEvent& event);
     void ApplyDecBrightnessHotkey(wxCommandEvent& event);
-
     void ApplyEnableDisableHotkey(wxCommandEvent& event);
+
     void ClearIncTemperatureHotkey(wxCommandEvent& event);
     void ClearDecTemperatureHotkey(wxCommandEvent& event);
     void ClearIncBrightnessHotkey(wxCommandEvent& event);
@@ -54,7 +53,7 @@ private:
     void OnBrightnessSlider(wxCommandEvent& event);
     void OnApply(wxCommandEvent& event);
     void OnHotkey(wxKeyEvent& event);
-    void OnCloseWindow(wxCloseEvent& WXUNUSED(event));
+    void OnCloseWindow(wxCloseEvent& event);
     void OnIconize(wxIconizeEvent& event);
 
     void SwitchToDay(wxCommandEvent& event);

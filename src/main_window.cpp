@@ -35,6 +35,14 @@ enum {
     COLORS_UPDATE_TIMER,
 };
 
+enum Hotkeys {
+    DEC_TEMPERATURE = 0,
+    INC_TEMPERATURE,
+    DEC_BRIGHTNESS,
+    INC_BRIGHTNESS,
+    ENABLE_DISABLE
+};
+
 } // namespace
 
 // clang-format off
@@ -60,45 +68,24 @@ wxBEGIN_EVENT_TABLE(MainWindow, wxDialog)
 
     EVT_CLOSE(MainWindow::OnCloseWindow)
     EVT_ICONIZE(MainWindow::OnIconize)
-    //EVT_SIZE(MainWindow::onResize)
     EVT_HOTKEY(wxID_ANY, MainWindow::OnHotkey)
     EVT_TIMER(COLORS_UPDATE_TIMER, MainWindow::UpdateColorsOnTimer)
 wxEND_EVENT_TABLE()
 // clang-format on
-#include "day_and_night.h"
+
 MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title)
-    : wxDialog(parent, id, title, wxDefaultPosition, wxDefaultSize,
-               wxRESIZE_BORDER | wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX | wxMINIMIZE_BOX )
+    : wxDialog(parent, id, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER | wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX | wxMINIMIZE_BOX )
     , taskbarIcon_{std::make_unique<TaskbarIcon>(this)} {
-    //wxIcon icon(wxIconLocation(R"(day-and-night.png)", 0));
-    //wxIcon icon(R"(e:\workspace\SoftNight\build\src\day-and-night64.png)", wxBITMAP_TYPE_PNG, 64, 64);
 
-    
-    
-    /*
-    wxImage img1(_T("day_and_night"), wxBITMAP_TYPE_PNG_RESOURCE, 0);
-    wxIcon icon;
-    wxBitmap bmp = wxBITMAP_PNG_FROM_DATA(day_and_night);
-    icon.CopyFromBitmap(bmp);//wxBitmap(day_and_night, wxBITMAP_TYPE_ANY));
-    */
-    //wxIcon icon(wxICON(day_and_night64));
-    //wxIcon icon(reinterpret_cast<const char*>(day_and_night64), 64, 64);
-    //wxIcon icon(wxIconLocation(R"(day_and_night.ico)", 0));
-
-    wxImage::AddHandler(new wxICOHandler);
     wxIcon icon(wxIconLocation(R"(day_and_night.ico)"));
-
-    
-
     if (icon.IsOk()) {
         SetIcon(icon);
-    }    
-    SetupUi();
-
-    if (!taskbarIcon_->SetIcon(icon, "SoftNight color control")) {
-        wxLogError("Could not set icon.");
+        if (!taskbarIcon_->SetIcon(icon, "SoftNight color control")) {
+            wxLogError("Could not set icon.");
+        }
     }
 
+    SetupUi();
 
     settings_ = LoadSettings(kSettingsFileName);
 
@@ -328,16 +315,6 @@ void MainWindow::UpdateColorsOnTimer(wxTimerEvent& WXUNUSED(event)) {
     Ramp2(settings_.activeColors);
 }
 
-
-
-enum Hotkeys {
-    DEC_TEMPERATURE = 0,
-    INC_TEMPERATURE,
-    DEC_BRIGHTNESS,
-    INC_BRIGHTNESS,
-    ENABLE_DISABLE
-};
-
 void MainWindow::RegisterHotKeys() {
     RegisterHotKey(Hotkeys::DEC_TEMPERATURE, settings_.decTemperature.GetModifiers(), settings_.decTemperature.GetKey());
     RegisterHotKey(Hotkeys::INC_TEMPERATURE, settings_.incTemperature.GetModifiers(), settings_.incTemperature.GetKey());
@@ -414,7 +391,6 @@ void MainWindow::ClearEnableDisableHotkey(wxCommandEvent& WXUNUSED(event)) {
     enableDisable_->ClearHotkey();
     UnregisterHotKey(Hotkeys::ENABLE_DISABLE);
 }
-
 
 void MainWindow::OnHotkey(wxKeyEvent& event) {
     const auto hotkey = Hotkey{event.GetKeyCode(), event.GetModifiers(), event.GetUnicodeKey()};

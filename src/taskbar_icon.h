@@ -10,7 +10,7 @@ public:
 
     virtual wxMenu* CreatePopupMenu() wxOVERRIDE;
 
-    void OnLeftButtonDClick(wxTaskBarIconEvent& event);
+    void ShowHide(wxTaskBarIconEvent& event);
     void OnMenuRestore(wxCommandEvent& event);
     void OnMenuExit(wxCommandEvent& event);
 
