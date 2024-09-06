@@ -95,10 +95,7 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title)
     }    
     SetupUi();
 
-    if (!taskbarIcon_->SetIcon(icon, "wxTaskBarIcon Sample\n"
-                                "With a very, very, very, very\n"
-                                "long tooltip whose length is\n"
-                                "greater than 64 characters.")) {
+    if (!taskbarIcon_->SetIcon(icon, "SoftNight color control")) {
         wxLogError("Could not set icon.");
     }
 
