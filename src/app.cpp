@@ -9,7 +9,7 @@ bool SoftNight::OnInit() {
         return false;
 
     auto mainWindow = new MainWindow(nullptr, wxID_ANY, "SoftNight color control");
-
-    mainWindow->Show(true);
+    (void)mainWindow;
+    //mainWindow->Show(true);
     return true;
 }
