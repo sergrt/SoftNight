@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include "resource.h"
 
 #include "color_correction.h"
 
@@ -64,22 +65,73 @@ wxBEGIN_EVENT_TABLE(MainWindow, wxDialog)
     EVT_TIMER(COLORS_UPDATE_TIMER, MainWindow::UpdateColorsOnTimer)
 wxEND_EVENT_TABLE()
 // clang-format on
+#include "day_and_night.h"
+MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title)
+    : wxDialog(parent, id, title, wxDefaultPosition, wxDefaultSize,
+               wxRESIZE_BORDER | wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX | wxMINIMIZE_BOX )
+    , taskbarIcon_{std::make_unique<TaskbarIcon>(this)} {
+    //wxIcon icon(wxIconLocation(R"(day-and-night.png)", 0));
+    //wxIcon icon(R"(e:\workspace\SoftNight\build\src\day-and-night64.png)", wxBITMAP_TYPE_PNG, 64, 64);
+
+    
+    
+    /*
+    wxImage img1(_T("day_and_night"), wxBITMAP_TYPE_PNG_RESOURCE, 0);
+    wxIcon icon;
+    wxBitmap bmp = wxBITMAP_PNG_FROM_DATA(day_and_night);
+    icon.CopyFromBitmap(bmp);//wxBitmap(day_and_night, wxBITMAP_TYPE_ANY));
+    */
+    //wxIcon icon(wxICON(day_and_night64));
+    //wxIcon icon(reinterpret_cast<const char*>(day_and_night64), 64, 64);
+    //wxIcon icon(wxIconLocation(R"(day_and_night.ico)", 0));
+
+
+    wxIcon icon(wxIconLocation(R"(day_and_night.ico)"));
+
+    
+
+    if (icon.IsOk()) {
+        SetIcon(icon);
+    }    
+    SetupUi();
+
+    if (!taskbarIcon_->SetIcon(icon, "wxTaskBarIcon Sample\n"
+                                "With a very, very, very, very\n"
+                                "long tooltip whose length is\n"
+                                "greater than 64 characters.")) {
+        wxLogError("Could not set icon.");
+    }
+
+
+    settings_ = LoadSettings(kSettingsFileName);
+
+    UpdateSliders();
+    UpdateHotkeysFields();
+    UpdateTimeField();
+    UpdateSwitchColorInfo();
+
+    RegisterHotKeys();
+
+    colorTimer_ = std::make_unique<wxTimer>(this, COLORS_UPDATE_TIMER);
+    colorTimer_->SetOwner(this, COLORS_UPDATE_TIMER);
+    StartUpdateColorsTimer();
+}
+
+
+MainWindow::~MainWindow() {
+    StopUpdateColorsTimer();
+#ifdef _DEBUG
+    // Visual studio bug
+    // This prevents the tzdb allocations from being reported as memory leaks
+    std::chrono::get_tzdb_list().~tzdb_list();
+#endif
+}
 
 void MainWindow::OnCloseWindow(wxCloseEvent& WXUNUSED(event)) {
     Destroy();
 }
-MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long /*style*/)
-    : wxDialog(parent, id, title, pos, size,
-               wxRESIZE_BORDER | wxCAPTION | wxSYSTEM_MENU | wxCLOSE_BOX | wxMINIMIZE_BOX),
-      m_taskBarIcon{std::make_unique<MyTaskBarIcon>(this)} {
-    wxIcon icon(wxIconLocation(R"(c:\Windows\system32\imageres.dll)", -67));
-    if (icon.IsOk()) {
-        // wxLogMessage("Loaded icon of size %d*%d", icon.GetWidth(), icon.GetHeight());
-        int x;
-        (void)x;
-    }
-    SetIcon(icon);
 
+void MainWindow::SetupUi() {
     this->SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     wxFlexGridSizer* mainFlexSizer = new wxFlexGridSizer(2, 1, 0, 0);
@@ -105,12 +157,10 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     temperatureBrightnessSizer->SetFlexibleDirection(wxBOTH);
     temperatureBrightnessSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    auto temperatureText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Temperature, K"),
-                                            wxDefaultPosition, wxDefaultSize, 0);
+    auto temperatureText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Temperature, K"));
     temperatureBrightnessSizer->Add(temperatureText, 0, wxALL, 5);
 
-    temperatureSlider_ =
-        new wxSlider(colorControlsBox->GetStaticBox(), TEMPERATURE_SLIDER, kDefaultTemperatureK, kMinTemperatureK,
+    temperatureSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), TEMPERATURE_SLIDER, kDefaultTemperatureK, kMinTemperatureK,
                      kMaxTemperatureK, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_VALUE_LABEL);
     temperatureBrightnessSizer->Add(temperatureSlider_, 0, wxALL | wxEXPAND, 5);
 
@@ -124,8 +174,7 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     temperatureBrightnessSizer->AddSpacer((10, 20));
     temperatureBrightnessSizer->AddSpacer((10, 20));
 
-    auto brightnessText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Brightness"),
-                                           wxDefaultPosition, wxDefaultSize, 0);
+    auto brightnessText = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY, _("Brightness"));
     temperatureBrightnessSizer->Add(brightnessText, 0, wxALL, 5);
 
     brightnessSlider_ = new wxSlider(colorControlsBox->GetStaticBox(), BRIGHTNESS_SLIDER, kDefaultBrightness - 128,
@@ -149,8 +198,8 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
     timePicker_ = new wxTimePickerCtrl(colorControlsBox->GetStaticBox(), wxID_ANY);
     timeSizer->Add(timePicker_, 0, wxALIGN_CENTER | wxALL, 5);
     timeSizer->Add(0, 0, 1, wxEXPAND, 5);
-    auto apply =
-        new wxButton(colorControlsBox->GetStaticBox(), BN_APPLY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0);
+
+    auto apply = new wxButton(colorControlsBox->GetStaticBox(), BN_APPLY, _("Apply"));
     timeSizer->Add(apply, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
     auto colorControlsSizer = new wxFlexGridSizer(3, 1, 0, 0);
@@ -232,27 +281,9 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title, c
 
     this->SetSizer(mainSizer);
 
-    settings_ = LoadSettings(kSettingsFileName);
-
-    UpdateSliders();
-    UpdateHotkeysFields();
-    UpdateTimeField();
-    UpdateSwitchColorInfo();
-
     this->SetSize({650, 700});
     this->Layout();
     this->Centre(wxBOTH);
-
-    RegisterHotKeys();
-    //StartColorThread();
-
-    colorTimer_ = std::make_unique<wxTimer>(this, COLORS_UPDATE_TIMER);
-    colorTimer_->SetOwner(this, COLORS_UPDATE_TIMER);
-    StartUpdateColorsTimer();
-    //this->Connect(colorTimer_->GetId(), wxEVT_TIMER, wxTimerEventHandler(MyDialog1::UpdateColorsOnTimer), NULL, this);
-    
-    // SaveSettings(settings_, kSettingsFileName);
-    
 }
 
 void MainWindow::UpdateSwitchColorInfo() {
@@ -301,13 +332,6 @@ void MainWindow::UpdateColorsOnTimer(wxTimerEvent& WXUNUSED(event)) {
 }
 
 
-MainWindow::~MainWindow() {
-    StopUpdateColorsTimer();
-#ifdef _DEBUG
-    // to prevent the tzdb allocations from being reported as memory leaks
-    std::chrono::get_tzdb_list().~tzdb_list();
-#endif
-}
 
 enum Hotkeys {
     DEC_TEMPERATURE = 0,
@@ -331,58 +355,7 @@ void MainWindow::UpdateHotkeysFields() {
     incBrightness_->SetHotkey(settings_.incBrightness);
     decBrightness_->SetHotkey(settings_.decBrightness);
     enableDisable_->SetHotkey(settings_.enableDisable);
-
-
-    
-    /*
-    auto w = this->FindFocus();
-
-    
-    auto keyInput = wxUIActionSimulator();
-
-    decColorTemp->SetFocus();
-    wxYield();
-    decColorTemp->Refresh();
-    wxYield();
-    keyInput.KeyDown(settings_.decTemperature.key, settings_.decTemperature.modifiers);
-    keyInput.KeyUp(settings_.decTemperature.key, settings_.decTemperature.modifiers);
-    wxYield();
-
-    
-    
-    wxYield();
-    
-    incColorTemp->SetFocus();
-    wxYield();
-    keyInput.KeyDown(settings_.incTemperature.key, settings_.incTemperature.modifiers);
-    keyInput.KeyUp(settings_.incTemperature.key, settings_.incTemperature.modifiers);
-    wxYield();
-
-    decBrightness->SetFocus();
-    keyInput.KeyDown(settings_.decBrightness.key, settings_.decBrightness.modifiers);
-    keyInput.KeyUp(settings_.decBrightness.key, settings_.decBrightness.modifiers);
-    wxYield();
-
-    incBrightness->SetFocus();
-    keyInput.KeyDown(settings_.incBrightness.key, settings_.incBrightness.modifiers);
-    keyInput.KeyUp(settings_.incBrightness.key, settings_.incBrightness.modifiers);
-    wxYield();
-
-    wxYield();
-    enableDisable->SetFocus();
-    keyInput.KeyDown(settings_.enableDisable.key, settings_.enableDisable.modifiers);
-    keyInput.KeyUp(settings_.enableDisable.key, settings_.enableDisable.modifiers);
-
-    if (w)
-        w->SetFocus();
-    else {
-        this->SetFocus();
-    }
-    */
 }
-
-
-
 
 void MainWindow::ApplyIncTemperatureHotkey(wxCommandEvent& WXUNUSED(event)) {
     settings_.incTemperature = incTemperature_->GetHotkey();
@@ -458,7 +431,6 @@ void MainWindow::OnHotkey(wxKeyEvent& event) {
     } else if (hotkey == settings_.decBrightness) {
         DecreaseBrightness();
     } else if (hotkey == settings_.enableDisable) {
-        //DefaultBrightness();
         EnableDisable();
     }
 }
@@ -466,7 +438,7 @@ void MainWindow::OnHotkey(wxKeyEvent& event) {
 void MainWindow::OnIconize(wxIconizeEvent& event) {
     if (event.IsIconized()) {
         Show(false);
-        // event.Skip();
+        //event.Skip();
     } else {
         // event.Skip();
         // SetFocus();
@@ -506,14 +478,6 @@ void MainWindow::DecreaseBrightness() {
     Ramp2(settings_.activeColors);
     UpdateSliders();
 }
-
-/*
-void MainWindow::DefaultBrightness() {
-    current_ = ColorSettings{};
-    Ramp(current_);
-    UpdateSliders();
-}
-*/
 
 void MainWindow::EnableDisable() {
     settings_.isEnabled = !settings_.isEnabled;
@@ -581,13 +545,3 @@ void MainWindow::UpdateTimeField() {
     const auto& time = daySelect_->GetValue() ? settings_.swithToDay : settings_.swithToNight;
     timePicker_->SetTime(time.hour, time.minute, time.second);
 }
-
-/*
- void MainWindow::onResize(wxSizeEvent& event) {
-    // layout everything in the dialog
-    // temperatureDescription->Wrap(event.GetSize().GetWidth());
-    Layout();
-
-    event.Skip();
-}
-*/

@@ -20,7 +20,7 @@ set(SOURCE
     hotkey_input.cpp
     main_window.cpp
     settings.cpp
-    taskbar.cpp)
+    taskbar_icon.cpp)
 
 set(HEADER
     app.h
@@ -30,12 +30,17 @@ set(HEADER
     hotkey_input.h
     main_window.h
     settings.h
-    taskbar.h
+    taskbar_icon.h
 )
 
 set(OTHER_FILES
+    resource.h
+    soft_night.rc
+    day_and_night.ico
     ${wxWidgets_INCLUDE_DIRS}/wx/msw/wx_dpi_aware.manifest
 )
+
+configure_file(day_and_night.ico ${CMAKE_CURRENT_BINARY_DIR}/day_and_night.ico COPYONLY)
 
 add_executable(${PROJECT_NAME} WIN32 ${SOURCE} ${HEADER} ${OTHER_FILES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES})

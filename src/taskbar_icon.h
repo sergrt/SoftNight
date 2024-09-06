@@ -3,9 +3,9 @@
 #include <wx/dialog.h>
 #include <wx/taskbar.h>
 
-class MyTaskBarIcon : public wxTaskBarIcon {
+class TaskbarIcon : public wxTaskBarIcon {
 public:
-    MyTaskBarIcon(wxDialog *dialog);
+    TaskbarIcon(wxDialog *mainWindow);
 
     void OnLeftButtonDClick(wxTaskBarIconEvent &);
     void OnMenuRestore(wxCommandEvent &);
@@ -16,7 +16,7 @@ public:
     void OnMenuSub(wxCommandEvent &);
     virtual wxMenu *CreatePopupMenu() wxOVERRIDE;
 
-    wxDECLARE_EVENT_TABLE();
+    wxDialog* mainWindow_{};
 
-    wxDialog* m_dialog{};
+    wxDECLARE_EVENT_TABLE();
 };

@@ -8,7 +8,7 @@ bool SoftNight::OnInit() {
     if (!wxApp::OnInit())
         return false;
 
-    auto mainWindow = new MainWindow(nullptr, -1, "SoftNight color control");
+    auto mainWindow = new MainWindow(nullptr, wxID_ANY, "SoftNight color control");
 
     mainWindow->Show(true);
     return true;

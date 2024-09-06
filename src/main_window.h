@@ -1,7 +1,7 @@
 #pragma once
 #include "hotkey_input.h"
 #include "settings.h"
-#include "taskbar.h"
+#include "taskbar_icon.h"
 
 #include <wx/dialog.h>
 #include <wx/radiobut.h>
@@ -14,13 +14,13 @@
 
 class MainWindow : public wxDialog {
 public:
-    MainWindow(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString,
-               const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize,
-               long style = wxCAPTION | wxDEFAULT_DIALOG_STYLE | wxMINIMIZE_BOX | wxSYSTEM_MENU);
+    MainWindow(wxWindow* parent, wxWindowID id, const wxString& title);
 
     ~MainWindow();
 
 private:
+    void SetupUi();
+
     void RegisterHotKeys();
     void UpdateHotkeysFields();
     void UpdateTimeField();
@@ -71,7 +71,7 @@ private:
     HotkeyInput* incBrightness_{};
     HotkeyInput* enableDisable_{};
 
-    std::unique_ptr<MyTaskBarIcon> m_taskBarIcon;
+    std::unique_ptr<TaskbarIcon> taskbarIcon_{};
     std::unique_ptr<wxTimer> colorTimer_{};
 
     struct SwitchColorInfo {
