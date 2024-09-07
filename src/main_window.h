@@ -71,9 +71,17 @@ private:
     wxButton* applyButton_{};
     wxButton* resetButton_{};
     HotkeyInput* decTemperature_{};
+    wxButton* decColorTempApply_{};
+    wxButton* decColorTempClear_{};
     HotkeyInput* incTemperature_{};
+    wxButton* incColorTempApply_{};
+    wxButton* incColorTempClear_{};
     HotkeyInput* decBrightness_{};
+    wxButton* decBrightnessApply_{};
+    wxButton* decBrightnessClear_{};
     HotkeyInput* incBrightness_{};
+    wxButton* incBrightnessApply_{};
+    wxButton* incBrightnessClear_{};
     HotkeyInput* enableDisable_{};
 
     std::unique_ptr<TaskbarIcon> taskbarIcon_{};
