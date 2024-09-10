@@ -96,15 +96,13 @@ MainWindow::MainWindow(wxWindow* parent, wxWindowID id, const wxString& title)
     UpdateTimeField();
     UpdateSwitchColorInfo(&settings_.activeColors);
     if (settings_.activeColors == settings_.dayColors) {
-        daySelect_->SetValue(true);
-        daySelect_->SetFocus();
         wxCommandEvent e{};
         SwitchToDay(e);
+        daySelect_->SetFocus();
     } else {
-        nightSelect_->SetValue(true);
-        nightSelect_->SetFocus();
         wxCommandEvent e{};
         SwitchToNight(e);
+        nightSelect_->SetFocus();
     }
 
     RegisterHotKeys();
@@ -304,12 +302,12 @@ void MainWindow::UpdateSwitchColorInfo(ColorSettings* oppositeColorSettings) {
 
     if (switchToDay < switchToNight) {
         switchColorInfo_.epochTimeToSwitch = switchToDay.time_since_epoch() / std::chrono::milliseconds(1);
-        switchColorInfo_.switchToColor = settings_.dayColors;
+        switchColorInfo_.switchTo = SwitchColorInfo::SwitchTo::Day;
         if (oppositeColorSettings)
             *oppositeColorSettings = settings_.nightColors;
     } else {
         switchColorInfo_.epochTimeToSwitch = switchToNight.time_since_epoch() / std::chrono::milliseconds(1);
-        switchColorInfo_.switchToColor = settings_.nightColors;
+        switchColorInfo_.switchTo = SwitchColorInfo::SwitchTo::Night;
         if (oppositeColorSettings)
             *oppositeColorSettings = settings_.dayColors;
     }
@@ -327,7 +325,12 @@ void MainWindow::UpdateColorsOnTimer(wxTimerEvent& WXUNUSED(event)) {
     const auto curTime = std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()};
 
     if (curTime.get_local_time().time_since_epoch() / std::chrono::milliseconds(1) >= switchColorInfo_.epochTimeToSwitch) {
-        settings_.activeColors = switchColorInfo_.switchToColor;
+        wxCommandEvent e{};
+        if (switchColorInfo_.switchTo == SwitchColorInfo::SwitchTo::Day)
+            SwitchToDay(e);
+        else
+            SwitchToNight(e);
+
         UpdateSwitchColorInfo();
     }
 
@@ -579,6 +582,7 @@ void MainWindow::OnReset(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void MainWindow::SwitchToDay(wxCommandEvent& WXUNUSED(event)) {
+    daySelect_->SetValue(true);
     settings_.activeColors = settings_.dayColors;
     timePicker_->SetTime(settings_.swithToDay.hour, settings_.swithToDay.minute, settings_.swithToDay.second);
     Ramp2(settings_.activeColors);
@@ -586,6 +590,7 @@ void MainWindow::SwitchToDay(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void MainWindow::SwitchToNight(wxCommandEvent& WXUNUSED(event)) {
+    nightSelect_->SetValue(true);
     settings_.activeColors = settings_.nightColors;
     timePicker_->SetTime(settings_.swithToNight.hour, settings_.swithToNight.minute, settings_.swithToNight.second);
     Ramp2(settings_.activeColors);

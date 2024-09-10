@@ -89,7 +89,8 @@ private:
 
     struct SwitchColorInfo {
         long long epochTimeToSwitch{};
-        ColorSettings switchToColor{};
+        enum class SwitchTo { Day, Night };
+        SwitchTo switchTo{};
     };
 
     Settings settings_{};
