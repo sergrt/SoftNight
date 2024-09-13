@@ -2,17 +2,20 @@
 
 #include <wx/menu.h>
 #include <wx/dialog.h>
-//#include <wx/msgdlg.h>
+
+namespace {
 
 enum {
-    PU_RESTORE = 10001,
-    PU_EXIT,
+    POPUP_MENU_RESTORE = 10001,
+    POPUP_MENU_EXIT,
 };
+
+} // namespace
 
 // clang-format off
 wxBEGIN_EVENT_TABLE(TaskbarIcon, wxTaskBarIcon)
-    EVT_MENU(PU_RESTORE, TaskbarIcon::OnMenuRestore)
-    EVT_MENU(PU_EXIT, TaskbarIcon::OnMenuExit)
+    EVT_MENU(POPUP_MENU_RESTORE, TaskbarIcon::OnMenuRestore)
+    EVT_MENU(POPUP_MENU_EXIT, TaskbarIcon::OnMenuExit)
     EVT_TASKBAR_LEFT_UP(TaskbarIcon::ShowHide)
 wxEND_EVENT_TABLE()
 // clang-format on
@@ -23,9 +26,9 @@ TaskbarIcon::TaskbarIcon(wxDialog* mainWindow)
 
 wxMenu* TaskbarIcon::CreatePopupMenu() {
     auto menu = new wxMenu;
-    menu->Append(PU_RESTORE, "&Restore main window");
+    menu->Append(POPUP_MENU_RESTORE, "&Restore");
     menu->AppendSeparator();
-    menu->Append(PU_EXIT, "E&xit");
+    menu->Append(POPUP_MENU_EXIT, "E&xit");
     return menu;
 }
 

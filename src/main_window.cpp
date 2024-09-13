@@ -333,8 +333,6 @@ void MainWindow::UpdateColorsOnTimer(wxTimerEvent& WXUNUSED(event)) {
 
         UpdateSwitchColorInfo();
     }
-
-    Ramp2(settings_.activeColors);
 }
 
 void MainWindow::RegisterHotKeys() {
@@ -440,12 +438,6 @@ void MainWindow::OnHotkey(wxKeyEvent& event) {
 void MainWindow::OnIconize(wxIconizeEvent& event) {
     if (event.IsIconized()) {
         Show(false);
-        //event.Skip();
-    } else {
-        // event.Skip();
-        // SetFocus();
-        // Raise();
-        // Show(true);
     }
 }
 
@@ -577,8 +569,6 @@ void MainWindow::OnApply(wxCommandEvent& WXUNUSED(event)) {
 void MainWindow::OnReset(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = {kDefaultTemperatureK, kDefaultBrightness};
     UpdateColorControls();
-    //temperatureSlider_->SetValue(kDefaultTemperatureK);
-    //brightnessSlider_->SetValue(kDefaultBrightness - 128);
 }
 
 void MainWindow::SwitchToDay(wxCommandEvent& WXUNUSED(event)) {

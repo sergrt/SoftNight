@@ -10,7 +10,6 @@ inline const int kMaxBrightness = 255;
 inline const int kDefaultBrightness = 128;
 inline const int kBrightnessStep = 5;
 
-
 struct ColorSettings {
     int temperatureK{kDefaultTemperatureK};
     int brightness{kDefaultBrightness};
