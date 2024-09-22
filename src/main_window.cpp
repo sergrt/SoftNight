@@ -160,8 +160,8 @@ void MainWindow::SetupUi() {
     temperatureBrightnessSizer->Add(temperatureSlider_, 0, wxALL | wxEXPAND, 5);
 
     auto temperatureDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY,
-                                                   _("Photo-grade range is 1000K - 40000K. White light = 6500K.\nRange "
-                                                     "can be limited by Windows, see README for details"));
+                                                   _("Photo-grade range is 1000K - 40000K. White light = 6500K\nRange "
+                                                     "can be limited by Windows, see README.md for details"));
     temperatureBrightnessSizer->AddSpacer((10, 10));
     temperatureBrightnessSizer->Add(temperatureDescription, 0, wxALIGN_TOP | wxALL | wxEXPAND, 0);
 
@@ -178,7 +178,7 @@ void MainWindow::SetupUi() {
     temperatureBrightnessSizer->Add(brightnessSlider_, 0, wxALL | wxEXPAND, 5);
 
     auto brightnessDescription = new wxStaticText(colorControlsBox->GetStaticBox(), wxID_ANY,
-                                                  _("Use brightness slider to tweak color filtering.\nIt controls "
+                                                  _("Use brightness slider to tweak color filtering\nIt controls "
                                                     "red/orange - blue/white balance depending on temperature"),
                                                   wxDefaultPosition, wxDefaultSize, 0);
     temperatureBrightnessSizer->AddSpacer((10, 10));
@@ -445,32 +445,28 @@ void MainWindow::IncreaseTemperature() {
     settings_.activeColors.temperatureK += kTemperatureStep;
     if (settings_.activeColors.temperatureK > kMaxTemperatureK)
         settings_.activeColors.temperatureK = kMaxTemperatureK;
-    Ramp2(settings_.activeColors);
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::DecreaseTemperature() {
     settings_.activeColors.temperatureK -= kTemperatureStep;
     if (settings_.activeColors.temperatureK < kMinTemperatureK)
         settings_.activeColors.temperatureK = kMinTemperatureK;
-    Ramp2(settings_.activeColors);
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::IncreaseBrightness() {
     settings_.activeColors.brightness += kBrightnessStep;
     if (settings_.activeColors.brightness > kMaxBrightness)
         settings_.activeColors.brightness = kMaxBrightness;
-    Ramp2(settings_.activeColors);
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::DecreaseBrightness() {
     settings_.activeColors.brightness -= kBrightnessStep;
     if (settings_.activeColors.brightness < kMinBrightness)
         settings_.activeColors.brightness = kMinBrightness;
-    Ramp2(settings_.activeColors);
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::EnableDisable() {
@@ -483,8 +479,7 @@ void MainWindow::EnableDisable() {
         UnregisterHotKeys();
         StopUpdateColorsTimer();
     }
-    Ramp2(settings_.activeColors);
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::OnTemperatureSlider(wxCommandEvent& event) {
@@ -568,26 +563,29 @@ void MainWindow::OnApply(wxCommandEvent& WXUNUSED(event)) {
 
 void MainWindow::OnReset(wxCommandEvent& WXUNUSED(event)) {
     settings_.activeColors = {kDefaultTemperatureK, kDefaultBrightness};
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::SwitchToDay(wxCommandEvent& WXUNUSED(event)) {
     daySelect_->SetValue(true);
     settings_.activeColors = settings_.dayColors;
     timePicker_->SetTime(settings_.swithToDay.hour, settings_.swithToDay.minute, settings_.swithToDay.second);
-    Ramp2(settings_.activeColors);
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::SwitchToNight(wxCommandEvent& WXUNUSED(event)) {
     nightSelect_->SetValue(true);
     settings_.activeColors = settings_.nightColors;
     timePicker_->SetTime(settings_.swithToNight.hour, settings_.swithToNight.minute, settings_.swithToNight.second);
-    Ramp2(settings_.activeColors);
-    UpdateColorControls();
+    ApplyActiveColors();
 }
 
 void MainWindow::UpdateTimeField() {
     const auto& time = daySelect_->GetValue() ? settings_.swithToDay : settings_.swithToNight;
     timePicker_->SetTime(time.hour, time.minute, time.second);
+}
+
+void MainWindow::ApplyActiveColors() {
+    Ramp2(settings_.activeColors);
+    UpdateColorControls();
 }
