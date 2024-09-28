@@ -4,7 +4,7 @@ SoftNight color control
 ## Description
 Tiny and efficient no-nonsence Windows utility to control color temperature and brightness.
 
-I got tired of overloaded tools like f.lux or SunsetScreen. Some untilities caase flicker on screen, some even want money. So here's very simple, fast and free solution to control color temperature and brightness.
+There are some utilities to control color temperature in the wild (like f.lux or SunsetScreen). Some of them cause flicker on screen, some even want money. So here's very simple, fast and free solution to control color temperature and brightness. Two sliders, two time points, bunch of hotkeys and that's it.
 - Simple and easy on resources
 - Switch day/night presets based on time 
 - Hotkeys support for fast temperature/brightness adjustments
