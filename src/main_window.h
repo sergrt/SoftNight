@@ -30,6 +30,7 @@ private:
     void UpdateSwitchColorInfo(ColorSettings* oppositeColorSettings = nullptr);
     void StartUpdateColorsTimer();
     void StopUpdateColorsTimer();
+    void ApplyActiveColors();
 
     // Hotkey handlers
     void IncreaseTemperature();
